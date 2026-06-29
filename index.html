@@ -1121,7 +1121,7 @@ function showCallPopup(trip) {
   popup.classList.add('show');
   if(!already){
     startCallSound(); startVibrate();
-    const sayIt=()=>speak(`กรุณานำรถเข้าช่องโหลดสินค้าทันที ช่องโหลดของคุณคือ ช่อง ${trip.dock||'-'} ลำดับคิวของคุณคือ คิวที่ ${trip.rtlQueue||'-'} กรุณากดรับทราบด้วยค่ะ ขอบคุณค่ะ`);
+    const sayIt=()=>speak(`กรุณานำรถเข้าช่องโหลดสินค้า ช่องที่ ${trip.dock||'-'} ลำดับคิวที่ ${trip.rtlQueue||'-'} กรุณาสแกนคิวอาร์ยืนยันเข้าช่องโหลดค่ะ ขอบคุณค่ะ`);
     setTimeout(sayIt,500); clearInterval(callSpeakRepeatTimer); callSpeakRepeatTimer=setInterval(sayIt,SPEAK_REPEAT_MS);
   }
 }
