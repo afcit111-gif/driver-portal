@@ -6,199 +6,575 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#1a2e6e">
+<meta name="theme-color" content="#1e3a8a">
 <title>Driver Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <style>
-/* ── ทุก style เหมือนเดิม 100% ── */
-:root{
-  --blue:#1d4ed8;--blue-dk:#1e3a8a;--blue-lt:#eff6ff;--blue-ring:rgba(29,78,216,.15);
-  --green:#15803d;--green-dk:#14532d;--green-lt:#f0fdf4;
-  --amber:#d97706;--amber-lt:#fffbeb;
-  --red:#dc2626;--red-lt:#fef2f2;
-  --purple:#7c3aed;--purple-lt:#f5f3ff;
-  --text:#0f172a;--text2:#475569;--text3:#94a3b8;
-  --border:#e2e8f0;--bg:#f1f5f9;--surface:#fff;
-  --font:'Sarabun',sans-serif;
-  --safe-top:env(safe-area-inset-top,0px);
-  --safe-bot:env(safe-area-inset-bottom,0px);
+/* ═══════════════════════════════════════════
+   TOKEN SYSTEM
+   ─ Font base: 15px (ลด 5.5px จากเดิม 20.5px)
+   ─ Border radius: ลดขนาดลงให้สุภาพขึ้น
+   ─ Padding/gap: กระชับทั้งหมด
+   ─ Card shadow: เบาลง ดู native มากขึ้น
+═══════════════════════════════════════════ */
+:root {
+  /* palette */
+  --blue:     #1d4ed8;
+  --blue-dk:  #1e3a8a;
+  --blue-lt:  #eff6ff;
+  --blue-ring:rgba(29,78,216,.12);
+  --green:    #15803d;
+  --green-dk: #14532d;
+  --green-lt: #f0fdf4;
+  --amber:    #d97706;
+  --amber-lt: #fffbeb;
+  --red:      #dc2626;
+  --red-lt:   #fef2f2;
+  --purple:   #7c3aed;
+  --purple-lt:#f5f3ff;
+  --text:     #0f172a;
+  --text2:    #475569;
+  --text3:    #94a3b8;
+  --border:   #e2e8f0;
+  --bg:       #f1f5f9;
+  --surface:  #fff;
+  --font:     'Sarabun', sans-serif;
+  /* safe areas */
+  --sat: env(safe-area-inset-top,    0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left,   0px);
+  --sar: env(safe-area-inset-right,  0px);
+  /* spacing scale */
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px;
+  --sp-4: 16px; --sp-5: 20px; --sp-6: 24px;
+  /* radius */
+  --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 20px;
 }
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html{height:100%;overflow:hidden}
-body{height:100%;background:var(--bg);font-family:var(--font);color:var(--text);overflow:hidden;font-size:20.5px;position:fixed;width:100%;}
-.app{display:flex;flex-direction:column;height:100%;padding-top:var(--safe-top);padding-bottom:var(--safe-bot);}
-.topbar{flex-shrink:0;background:linear-gradient(135deg,var(--blue-dk),var(--blue));padding:19px 24px 21.5px;display:flex;align-items:center;justify-content:space-between;}
-.topbar-left{display:flex;flex-direction:column}
-.topbar-eyebrow{font-size:13px;color:rgba(255,255,255,.5);letter-spacing:.1em;text-transform:uppercase}
-.topbar-title{font-size:26.5px;font-weight:800;color:#fff;margin-top:2.5px}
-.topbar-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
-.clock-pill{display:inline-flex;align-items:center;gap:7px;font-size:18px;font-weight:700;color:rgba(255,255,255,.9);background:rgba(255,255,255,.15);border-radius:24px;padding:6px 15.5px;font-family:monospace;letter-spacing:.03em;}
-.clock-dot{width:8.5px;height:8.5px;border-radius:50%;background:#22c55e;animation:blink 2s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.mode-bar{flex-shrink:0;display:grid;grid-template-columns:1fr 1fr;background:var(--blue-dk);padding:12px 17px 14.5px;gap:12px;}
-.mtab{border:2.5px solid rgba(255,255,255,.2);border-radius:17px;background:rgba(255,255,255,.08);padding:15.5px 12px;text-align:center;cursor:pointer;transition:all .18s;user-select:none;}
-.mtab:active{transform:scale(.96)}
-.mtab.m-in{background:var(--blue-lt);border-color:var(--blue);box-shadow:0 0 0 2.5px var(--blue-ring)}
-.mtab.m-out{background:var(--green-lt);border-color:var(--green);box-shadow:0 0 0 2.5px rgba(21,128,61,.12)}
-.mtab-ico{font-size:31px;display:block;margin-bottom:5px}
-.mtab-name{font-size:19px;font-weight:700;color:rgba(255,255,255,.8)}
-.mtab.m-in .mtab-name{color:var(--blue)}
-.mtab.m-out .mtab-name{color:var(--green)}
-.mtab-desc{font-size:14.5px;color:rgba(255,255,255,.4);margin-top:2.5px}
-.mtab.m-in .mtab-desc,.mtab.m-out .mtab-desc{color:var(--text3)}
-.body{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:17px 19px;display:flex;flex-direction:column;gap:14.5px;}
-.card{background:var(--surface);border-radius:21.5px;box-shadow:0 2.5px 17px rgba(0,0,0,.08);padding:24px 21.5px;}
-.saved-strip{display:flex;align-items:center;justify-content:space-between;background:#f0f7ff;border:2px solid #bfdbfe;border-radius:14.5px;padding:14.5px 19px;margin-bottom:19px;}
-.saved-info{font-size:19px;color:var(--blue);font-weight:700;font-family:monospace}
-.saved-sub{font-size:14.5px;color:var(--text3);margin-top:2.5px}
-.saved-clear{background:none;border:none;font-size:15.5px;color:var(--text3);cursor:pointer;padding:7px 12px;border-radius:8.5px;font-family:var(--font);transition:all .15s}
-.saved-clear:hover{background:#fee2e2;color:var(--red)}
-.label{display:block;font-size:15.5px;font-weight:700;color:var(--text2);margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em}
-.label span{color:var(--red)}
-.inp-rider{width:100%;height:84px;border:2.5px solid var(--border);border-radius:17px;font-family:monospace;font-size:38.5px;font-weight:800;color:var(--text);background:#fafafa;outline:none;text-align:center;letter-spacing:.1em;text-transform:uppercase;transition:border-color .15s,box-shadow .15s;}
-.inp-rider::placeholder{font-family:var(--font);font-size:18px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--text3)}
-.inp-rider:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 5px var(--blue-ring)}
-.rider-hint{font-size:15.5px;color:var(--text3);text-align:center;margin-top:9.5px}
-.sbtn{width:100%;height:69.5px;border:none;border-radius:17px;font-family:var(--font);font-size:21.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9.5px;transition:all .18s;margin-top:17px;}
-.sbtn:active:not(:disabled){transform:scale(.97)}.sbtn:disabled{opacity:.45;cursor:not-allowed}
-.sbtn-in{background:var(--blue);color:#fff;box-shadow:0 5px 19px rgba(29,78,216,.35)}
-.sbtn-in:hover:not(:disabled){background:var(--blue-dk)}
-.sbtn-out{background:var(--green);color:#fff;box-shadow:0 5px 19px rgba(21,128,61,.35)}
-.sbtn-out:hover:not(:disabled){background:var(--green-dk)}
-.tp-title{font-size:20.5px;font-weight:700;margin-bottom:5px}
-.tp-sub{font-size:15.5px;color:var(--text3);margin-bottom:17px}
-.trip-opt{border:2px solid var(--border);border-radius:17px;padding:17px;margin-bottom:12px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:14.5px;background:var(--bg);}
-.trip-opt:last-child{margin-bottom:0}
-.trip-opt:hover{border-color:var(--blue);background:var(--blue-lt)}
-.trip-opt:active{transform:scale(.98)}
-.to-num{min-width:55px;height:55px;border-radius:12px;background:var(--blue-lt);border:2px solid #bfdbfe;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:var(--blue);flex-shrink:0;}
-.to-info{flex:1;min-width:0}
-.to-trip{font-size:18px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:monospace}
-.to-meta{font-size:15.5px;color:var(--text3);margin-top:3.5px}
-.to-badge{display:inline-block;font-size:14.5px;font-weight:700;padding:3.5px 11px;border-radius:7px;margin-top:5px}
-.s-hero{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:19px}
-.s-plate{font-size:29px;font-weight:800;background:var(--bg);border:2.5px solid var(--border);border-radius:12px;padding:6px 17px;letter-spacing:.04em;display:inline-block;width:fit-content;}
-.s-trip{font-size:15.5px;font-weight:700;color:var(--blue);margin-top:6px;font-family:monospace}
-.btn-refresh{background:var(--blue-lt);border:2px solid #bfdbfe;border-radius:12px;padding:9.5px 19px;font-size:17px;font-weight:600;color:var(--blue);cursor:pointer;font-family:var(--font);flex-shrink:0;}
-.driver-chip{display:flex;align-items:center;gap:14.5px;background:#f0f7ff;border:2px solid #bfdbfe;border-radius:17px;padding:14.5px 19px;}
-.driver-av{width:53px;height:53px;border-radius:14.5px;flex-shrink:0;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:20.5px;font-weight:800;color:#fff;}
-.driver-name-t{font-size:20.5px;font-weight:700}
-.driver-id-t{font-size:15.5px;color:var(--text3);font-family:monospace;margin-top:2.5px}
-.stepper{display:flex;margin:5px 0}
-.step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative}
-.step:not(:last-child)::after{content:'';position:absolute;top:18px;left:50%;width:100%;height:2.5px;background:var(--border);z-index:0}
-.step:not(:last-child).done::after{background:var(--green)}
-.step-c{width:36px;height:36px;border-radius:50%;border:2.5px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:14.5px;font-weight:700;color:var(--text3);position:relative;z-index:1;transition:all .3s;}
-.step.done .step-c{background:var(--green);border-color:var(--green);color:#fff}
-.step.active .step-c{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 0 0 3.5px var(--blue-ring)}
-.step-lbl{font-size:12px;color:var(--text3);margin-top:5px;text-align:center;font-weight:500;line-height:1.3}
-.step.done .step-lbl{color:var(--green);font-weight:600}
-.step.active .step-lbl{color:var(--blue);font-weight:700}
-.info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-top:14.5px}
-.info-box{background:var(--bg);border-radius:14.5px;padding:14px 8px}
-.info-box.full{grid-column:1/-1}
-.info-box.span2{grid-column:span 2}
-.info-box-lbl{font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px;text-align:center;line-height:1.25}
-.info-box-val{font-family:monospace;font-size:26px;font-weight:800;color:var(--text);text-align:center;letter-spacing:.03em}
-.info-box-val.ts{color:var(--green)}
-.info-box-val.na{color:var(--text3);font-weight:400;font-size:15px;font-family:var(--font)}
-.dock-val{font-family:monospace;font-size:26px;font-weight:900;color:var(--amber);letter-spacing:.04em;text-shadow:0 2px 12px rgba(217,119,6,.2);text-align:center}
-.dock-na{font-size:15px;color:var(--text3);font-weight:400;text-align:center}
-.staging-val{font-family:monospace;font-size:26px;font-weight:800;color:var(--purple);letter-spacing:.04em;text-align:center}
-.staging-na{font-size:15px;color:var(--text3);font-weight:400;text-align:center}
-.doc-grid{display:grid;grid-template-columns:1fr 1fr;gap:9.5px}
-.doc-box{padding:14.5px 17px;border-radius:14.5px;font-size:17px;font-weight:600;display:flex;align-items:center;gap:9.5px;border:2px solid var(--border);}
-.doc-box.ready{background:var(--green-lt);color:var(--green);border-color:#86efac}
-.doc-box.wait{background:#fafafa;color:var(--text3)}
-.doc-rcv{margin-top:11px;padding:15.5px 18px;border-radius:14.5px;font-size:18px;font-weight:700;text-align:center;background:var(--purple-lt);color:var(--purple);border:2px solid #c4b5fd;}
-.abtn-full{width:100%;height:69.5px;border:none;border-radius:17px;font-family:var(--font);font-size:21.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9.5px;transition:all .18s;}
-.abtn-full:active:not(:disabled){transform:scale(.97)}
-.abtn-full:disabled{opacity:.4;cursor:not-allowed}
-.abtn-co{background:var(--green);color:#fff;box-shadow:0 5px 17px rgba(21,128,61,.35)}
-.abtn-ci{background:var(--blue);color:#fff;box-shadow:0 5px 17px rgba(29,78,216,.35)}
-.notice{padding:17px 19px;border-radius:14.5px;font-size:18px;text-align:center;line-height:1.6}
-.notice small{font-size:15.5px}
-.notice-blue{background:var(--blue-lt);color:var(--blue);border:2px solid #bfdbfe}
-.notice-amber{background:var(--amber-lt);color:var(--amber);border:2px solid #fcd34d}
-.notice-red{background:var(--red-lt);color:var(--red);border:2px solid #fca5a5}
-.notice-green{background:var(--green-lt);color:var(--green);border:2px solid #86efac}
-.result-card{border-radius:21.5px;padding:33.5px 26.5px;text-align:center}
-.result-card.ok{background:var(--green-lt);border:2.5px solid #86efac}
-.result-card.err{background:var(--red-lt);border:2.5px solid #fca5a5}
-.result-card.warn{background:var(--amber-lt);border:2.5px solid #fcd34d}
-.r-ico{font-size:62.5px;display:block;margin-bottom:12px}
-.r-title{font-size:27.5px;font-weight:800;margin-bottom:9.5px}
-.result-card.ok .r-title{color:var(--green-dk)}
-.result-card.err .r-title{color:var(--red)}
-.result-card.warn .r-title{color:var(--amber)}
-.r-detail{font-size:18px;color:var(--text2);line-height:1.7;white-space:pre-line}
-.r-meta{margin-top:17px;background:rgba(0,0,0,.04);border-radius:12px;padding:14.5px 17px;text-align:left;font-size:17px}
-.r-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(0,0,0,.05)}
-.r-row:last-child{border-bottom:none}
-.r-key{color:var(--text3)}.r-val{font-weight:700;font-family:monospace}
-.r-back{margin-top:19px;width:100%;height:60px;border:2.5px solid;border-radius:15.5px;font-family:var(--font);font-size:19px;font-weight:600;cursor:pointer;background:transparent;}
-.result-card.ok .r-back{border-color:var(--green);color:var(--green)}
-.result-card.err .r-back{border-color:var(--red);color:var(--red)}
-.result-card.warn .r-back{border-color:var(--amber);color:var(--amber)}
-.load-ov{display:none;position:fixed;inset:0;background:rgba(255,255,255,.88);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:19px;backdrop-filter:blur(5px);}
-.load-ov.show{display:flex}
-.spin{width:53px;height:53px;border:3.5px solid #e2e8f0;border-top-color:var(--blue);border-radius:50%;animation:sp .8s linear infinite}
-@keyframes sp{to{transform:rotate(360deg)}}
-.load-txt{font-size:19px;font-weight:500;color:var(--text2)}
-.call-ov{display:none;position:fixed;inset:0;z-index:1100;align-items:flex-start;justify-content:center;background:rgba(10,20,50,.84);backdrop-filter:blur(7px);padding-top:max(var(--safe-top),19px);padding-left:19px;padding-right:19px;padding-bottom:24px;overflow-y:auto;}
-.call-ov.show{display:flex;animation:fadeIn .22s ease}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.call-box{width:100%;max-width:655px;border-radius:38px;overflow:hidden;box-shadow:0 31px 87px rgba(0,0,0,.45);margin-top:12px;animation:slideDown .28s cubic-bezier(.22,1,.36,1);}
-@keyframes slideDown{from{transform:translateY(-47px);opacity:0}to{transform:translateY(0);opacity:1}}
-.call-header{background:linear-gradient(135deg,#1a2e6e,#2563eb);padding:43.5px 38px 34.5px;text-align:center;position:relative}
-.call-wave{position:absolute;bottom:-1px;left:0;right:0;height:31px;background:var(--surface);clip-path:ellipse(60% 100% at 50% 100%)}
-.call-bell{font-size:74.5px;display:block;margin-bottom:12px;animation:bellRing .6s ease-in-out infinite alternate}
-@keyframes bellRing{from{transform:rotate(-15deg)}to{transform:rotate(15deg)}}
-.call-title{font-size:39px;font-weight:800;color:#fff;margin-bottom:4.5px}
-.call-sub{font-size:22px;color:rgba(255,255,255,.7)}
-.call-body{background:var(--surface);padding:34.5px 38px 43.5px}
-.call-dock-label{font-size:19px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;text-align:center;margin-bottom:9px}
-.call-dock-num{font-family:monospace;font-size:137px;font-weight:900;text-align:center;color:var(--blue);line-height:1;text-shadow:0 3.5px 25px rgba(37,99,235,.3)}
-.call-stg-label{font-size:19px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;text-align:center;margin:19px 0 8px}
-.call-stg-val{font-family:monospace;font-size:40px;font-weight:800;text-align:center;color:var(--purple);background:var(--purple-lt);border:2px solid #c4b5fd;border-radius:19px;padding:12.5px 28px;display:inline-block;width:100%}
-.call-queue{margin-top:19px;padding:20px 25px;border-radius:19px;background:#f0f9ff;border:2px solid #bae6fd;display:flex;align-items:center;justify-content:space-between}
-.call-queue-lbl{font-size:22px;color:#0369a1;font-weight:600}
-.call-queue-num{font-family:monospace;font-size:37.5px;font-weight:800;color:#0369a1}
-.call-ack{width:100%;height:94px;border:none;border-radius:25px;margin-top:28px;background:linear-gradient(135deg,var(--blue-dk),var(--blue));color:#fff;font-family:var(--font);font-size:30px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;transition:all .18s;box-shadow:0 6.5px 28px rgba(37,99,235,.45);}
-.call-ack:active{transform:scale(.96)}
-.docs-header{background:linear-gradient(135deg,var(--green-dk),var(--green));padding:43.5px 38px 34.5px;text-align:center;position:relative}
-.docs-ico{font-size:74.5px;display:block;margin-bottom:12px;animation:docsPop .55s ease-in-out infinite alternate}
-@keyframes docsPop{from{transform:scale(1)}to{transform:scale(1.1)}}
-.docs-title{font-size:39px;font-weight:800;color:#fff;margin-bottom:4.5px}
-.docs-sub{font-size:22px;color:rgba(255,255,255,.75)}
-.docs-ack{width:100%;height:94px;border:none;border-radius:25px;margin-top:28px;background:linear-gradient(135deg,var(--green-dk),var(--green));color:#fff;font-family:var(--font);font-size:30px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;transition:all .18s;box-shadow:0 6.5px 28px rgba(21,128,61,.45);}
-.docs-ack:active{transform:scale(.96)}
-.footer-link{text-align:center;padding:7px 0 5px}
-.back-link{background:none;border:none;font-size:17px;color:var(--text3);cursor:pointer;font-family:var(--font);padding:9.5px 19px}
-.back-link:hover{color:var(--text2)}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { height: 100%; overflow: hidden; -webkit-text-size-adjust: 100%; }
+body {
+  height: 100%;
+  background: var(--bg);
+  font-family: var(--font);
+  font-size: 15px;          /* ← 15px base แทน 20.5px */
+  line-height: 1.4;
+  color: var(--text);
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
+/* ── App shell ── */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding-top: var(--sat);
+  padding-bottom: var(--sab);
+  padding-left: var(--sal);
+  padding-right: var(--sar);
+}
+
+/* ─────────────────────────────────────────
+   TOP BAR
+───────────────────────────────────────── */
+.topbar {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--blue-dk), var(--blue));
+  padding: 12px 16px 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.topbar-eyebrow { font-size: 10px; color: rgba(255,255,255,.5); letter-spacing: .09em; text-transform: uppercase; }
+.topbar-title   { font-size: 18px; font-weight: 800; color: #fff; margin-top: 1px; }
+.clock-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 13px; font-weight: 700; color: rgba(255,255,255,.9);
+  background: rgba(255,255,255,.15); border-radius: 20px;
+  padding: 4px 11px; font-family: monospace; letter-spacing: .03em;
+}
+.clock-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; animation: blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ─────────────────────────────────────────
+   MODE BAR
+───────────────────────────────────────── */
+.mode-bar {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--blue-dk);
+  padding: 8px 12px 10px;
+  gap: 8px;
+}
+.mtab {
+  border: 2px solid rgba(255,255,255,.18);
+  border-radius: var(--r-md);
+  background: rgba(255,255,255,.07);
+  padding: 10px 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .18s;
+  user-select: none;
+}
+.mtab:active { transform: scale(.97); }
+.mtab.m-in  { background: var(--blue-lt); border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-ring); }
+.mtab.m-out { background: var(--green-lt); border-color: var(--green); box-shadow: 0 0 0 2px rgba(21,128,61,.1); }
+.mtab-ico  { font-size: 22px; display: block; margin-bottom: 3px; }
+.mtab-name { font-size: 14px; font-weight: 700; color: rgba(255,255,255,.8); }
+.mtab.m-in  .mtab-name { color: var(--blue); }
+.mtab.m-out .mtab-name { color: var(--green); }
+.mtab-desc { font-size: 11px; color: rgba(255,255,255,.38); margin-top: 1px; }
+.mtab.m-in  .mtab-desc,
+.mtab.m-out .mtab-desc { color: var(--text3); }
+
+/* ─────────────────────────────────────────
+   SCROLL BODY
+───────────────────────────────────────── */
+.body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ─────────────────────────────────────────
+   CARDS
+───────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border-radius: var(--r-xl);
+  box-shadow: 0 1px 8px rgba(0,0,0,.07);
+  padding: 16px 14px;
+}
+
+/* ─────────────────────────────────────────
+   FORM — LOGIN
+───────────────────────────────────────── */
+.saved-strip {
+  display: flex; align-items: center; justify-content: space-between;
+  background: #f0f7ff; border: 1.5px solid #bfdbfe; border-radius: var(--r-md);
+  padding: 10px 13px; margin-bottom: 12px;
+}
+.saved-info { font-size: 15px; color: var(--blue); font-weight: 700; font-family: monospace; }
+.saved-sub  { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.saved-clear {
+  background: none; border: none; font-size: 12px; color: var(--text3);
+  cursor: pointer; padding: 5px 9px; border-radius: 7px; font-family: var(--font); transition: all .15s;
+}
+.saved-clear:hover { background: #fee2e2; color: var(--red); }
+
+.label { display: block; font-size: 11px; font-weight: 700; color: var(--text2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .07em; }
+.label span { color: var(--red); }
+
+.inp-rider {
+  width: 100%; height: 60px;
+  border: 2px solid var(--border); border-radius: var(--r-md);
+  font-family: monospace; font-size: 28px; font-weight: 800;
+  color: var(--text); background: #fafafa;
+  outline: none; text-align: center; letter-spacing: .1em; text-transform: uppercase;
+  transition: border-color .15s, box-shadow .15s;
+}
+.inp-rider::placeholder { font-family: var(--font); font-size: 14px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--text3); }
+.inp-rider:focus { border-color: var(--blue); background: #fff; box-shadow: 0 0 0 4px var(--blue-ring); }
+.rider-hint { font-size: 12px; color: var(--text3); text-align: center; margin-top: 7px; }
+
+.sbtn {
+  width: 100%; height: 50px;
+  border: none; border-radius: var(--r-md);
+  font-family: var(--font); font-size: 16px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px;
+  transition: all .18s; margin-top: 12px;
+}
+.sbtn:active:not(:disabled) { transform: scale(.97); }
+.sbtn:disabled { opacity: .45; cursor: not-allowed; }
+.sbtn-in  { background: var(--blue);  color: #fff; box-shadow: 0 4px 14px rgba(29,78,216,.3); }
+.sbtn-out { background: var(--green); color: #fff; box-shadow: 0 4px 14px rgba(21,128,61,.3); }
+.sbtn-in:hover:not(:disabled)  { background: var(--blue-dk); }
+.sbtn-out:hover:not(:disabled) { background: var(--green-dk); }
+
+/* ─────────────────────────────────────────
+   TRIP PICKER
+───────────────────────────────────────── */
+.tp-title { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+.tp-sub   { font-size: 12px; color: var(--text3); margin-bottom: 12px; }
+.trip-opt {
+  border: 1.5px solid var(--border); border-radius: var(--r-md);
+  padding: 12px; margin-bottom: 8px; cursor: pointer;
+  transition: all .15s; display: flex; align-items: center; gap: 10px; background: var(--bg);
+}
+.trip-opt:last-child { margin-bottom: 0; }
+.trip-opt:hover  { border-color: var(--blue); background: var(--blue-lt); }
+.trip-opt:active { transform: scale(.98); }
+.to-num {
+  min-width: 40px; height: 40px; border-radius: 9px;
+  background: var(--blue-lt); border: 1.5px solid #bfdbfe;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 800; color: var(--blue); flex-shrink: 0;
+}
+.to-info { flex: 1; min-width: 0; }
+.to-trip { font-size: 13px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace; }
+.to-meta { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.to-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; margin-top: 4px; }
+
+/* ─────────────────────────────────────────
+   STATUS HERO
+───────────────────────────────────────── */
+.s-hero { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+.s-plate {
+  font-size: 22px; font-weight: 800;
+  background: var(--bg); border: 2px solid var(--border);
+  border-radius: 9px; padding: 4px 12px; letter-spacing: .04em; display: inline-block;
+}
+.s-trip { font-size: 12px; font-weight: 700; color: var(--blue); margin-top: 4px; font-family: monospace; }
+.btn-refresh {
+  background: var(--blue-lt); border: 1.5px solid #bfdbfe; border-radius: 9px;
+  padding: 7px 13px; font-size: 13px; font-weight: 600; color: var(--blue);
+  cursor: pointer; font-family: var(--font); flex-shrink: 0;
+}
+
+.driver-chip {
+  display: flex; align-items: center; gap: 10px;
+  background: #f0f7ff; border: 1.5px solid #bfdbfe;
+  border-radius: var(--r-md); padding: 10px 12px;
+}
+.driver-av {
+  width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+  background: var(--blue); display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 800; color: #fff;
+}
+.driver-name-t { font-size: 15px; font-weight: 700; }
+.driver-id-t   { font-size: 11px; color: var(--text3); font-family: monospace; margin-top: 1px; }
+
+/* ─────────────────────────────────────────
+   STEPPER
+───────────────────────────────────────── */
+.stepper { display: flex; margin: 4px 0; }
+.step    { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
+.step:not(:last-child)::after {
+  content: ''; position: absolute; top: 12px; left: 50%; width: 100%; height: 2px;
+  background: var(--border); z-index: 0;
+}
+.step:not(:last-child).done::after { background: var(--green); }
+.step-c {
+  width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--border);
+  background: var(--surface); display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: var(--text3); position: relative; z-index: 1; transition: all .3s;
+}
+.step.done   .step-c { background: var(--green); border-color: var(--green); color: #fff; }
+.step.active .step-c { background: var(--blue);  border-color: var(--blue);  color: #fff; box-shadow: 0 0 0 3px var(--blue-ring); }
+.step-lbl { font-size: 9px; color: var(--text3); margin-top: 3px; text-align: center; font-weight: 500; line-height: 1.3; }
+.step.done   .step-lbl { color: var(--green); font-weight: 600; }
+.step.active .step-lbl { color: var(--blue);  font-weight: 700; }
+
+/* ─────────────────────────────────────────
+   INFO GRID
+───────────────────────────────────────── */
+.info-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 7px; margin-top: 10px; }
+.info-box  { background: var(--bg); border-radius: var(--r-md); padding: 9px 6px; }
+.info-box.full  { grid-column: 1 / -1; }
+.info-box.span2 { grid-column: span 2; }
+.info-lbl  { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 3px; text-align: center; line-height: 1.25; }
+.info-val  { font-family: monospace; font-size: 18px; font-weight: 800; color: var(--text); text-align: center; }
+.info-val.ts { color: var(--green); }
+.info-val.na { color: var(--text3); font-weight: 400; font-size: 12px; font-family: var(--font); }
+.dock-val    { font-family: monospace; font-size: 20px; font-weight: 900; color: var(--amber); text-align: center; }
+.dock-na     { font-size: 11px; color: var(--text3); text-align: center; }
+.staging-val { font-family: monospace; font-size: 18px; font-weight: 800; color: var(--purple); text-align: center; }
+.staging-na  { font-size: 11px; color: var(--text3); text-align: center; }
+
+/* ─────────────────────────────────────────
+   DOCUMENT STATUS
+───────────────────────────────────────── */
+.doc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.doc-box  {
+  padding: 10px 12px; border-radius: var(--r-md); font-size: 13px; font-weight: 600;
+  display: flex; align-items: center; gap: 7px; border: 1.5px solid var(--border);
+}
+.doc-box.ready { background: var(--green-lt); color: var(--green); border-color: #86efac; }
+.doc-box.wait  { background: #fafafa; color: var(--text3); }
+.doc-rcv {
+  margin-top: 8px; padding: 10px 13px; border-radius: var(--r-md);
+  font-size: 14px; font-weight: 700; text-align: center;
+  background: var(--purple-lt); color: var(--purple); border: 1.5px solid #c4b5fd;
+}
+
+/* ─────────────────────────────────────────
+   ACTION BUTTONS
+───────────────────────────────────────── */
+.abtn-full {
+  width: 100%; height: 52px; border: none; border-radius: var(--r-md);
+  font-family: var(--font); font-size: 16px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px;
+  transition: all .18s;
+}
+.abtn-full:active:not(:disabled) { transform: scale(.97); }
+.abtn-full:disabled { opacity: .4; cursor: not-allowed; }
+.abtn-co { background: var(--green); color: #fff; box-shadow: 0 4px 14px rgba(21,128,61,.3); }
+.abtn-ci { background: var(--blue);  color: #fff; box-shadow: 0 4px 14px rgba(29,78,216,.3); }
+
+/* ─────────────────────────────────────────
+   NOTICE BANNERS
+───────────────────────────────────────── */
+.notice { padding: 12px 14px; border-radius: var(--r-md); font-size: 14px; text-align: center; line-height: 1.55; }
+.notice small  { font-size: 12px; }
+.notice-blue   { background: var(--blue-lt);  color: var(--blue);  border: 1.5px solid #bfdbfe; }
+.notice-amber  { background: var(--amber-lt); color: var(--amber); border: 1.5px solid #fcd34d; }
+.notice-red    { background: var(--red-lt);   color: var(--red);   border: 1.5px solid #fca5a5; }
+.notice-green  { background: var(--green-lt); color: var(--green); border: 1.5px solid #86efac; }
+
+/* ─────────────────────────────────────────
+   RESULT CARD
+───────────────────────────────────────── */
+.result-card { border-radius: var(--r-xl); padding: 24px 20px; text-align: center; }
+.result-card.ok   { background: var(--green-lt); border: 2px solid #86efac; }
+.result-card.err  { background: var(--red-lt);   border: 2px solid #fca5a5; }
+.result-card.warn { background: var(--amber-lt); border: 2px solid #fcd34d; }
+.r-ico    { font-size: 48px; display: block; margin-bottom: 10px; }
+.r-title  { font-size: 20px; font-weight: 800; margin-bottom: 7px; }
+.result-card.ok   .r-title { color: var(--green-dk); }
+.result-card.err  .r-title { color: var(--red); }
+.result-card.warn .r-title { color: var(--amber); }
+.r-detail { font-size: 14px; color: var(--text2); line-height: 1.65; white-space: pre-line; }
+.r-meta   { margin-top: 13px; background: rgba(0,0,0,.04); border-radius: 9px; padding: 11px 13px; text-align: left; font-size: 13px; }
+.r-row    { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(0,0,0,.05); }
+.r-row:last-child { border-bottom: none; }
+.r-key { color: var(--text3); }
+.r-val { font-weight: 700; font-family: monospace; }
+.r-back {
+  margin-top: 14px; width: 100%; height: 46px; border: 2px solid; border-radius: var(--r-md);
+  font-family: var(--font); font-size: 15px; font-weight: 600; cursor: pointer; background: transparent;
+}
+.result-card.ok   .r-back { border-color: var(--green); color: var(--green); }
+.result-card.err  .r-back { border-color: var(--red);   color: var(--red); }
+.result-card.warn .r-back { border-color: var(--amber); color: var(--amber); }
+
+/* ─────────────────────────────────────────
+   FOOTER BACK LINK
+───────────────────────────────────────── */
+.footer-link { text-align: center; padding: 4px 0; }
+.back-link   { background: none; border: none; font-size: 13px; color: var(--text3); cursor: pointer; font-family: var(--font); padding: 7px 14px; }
+.back-link:hover { color: var(--text2); }
+
+/* ─────────────────────────────────────────
+   LOADING OVERLAY
+───────────────────────────────────────── */
+.load-ov {
+  display: none; position: fixed; inset: 0;
+  background: rgba(255,255,255,.88); z-index: 999;
+  align-items: center; justify-content: center;
+  flex-direction: column; gap: 14px; backdrop-filter: blur(4px);
+}
+.load-ov.show { display: flex; }
+.spin { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: var(--blue); border-radius: 50%; animation: sp .8s linear infinite; }
+@keyframes sp { to { transform: rotate(360deg); } }
+.load-txt { font-size: 14px; font-weight: 500; color: var(--text2); }
+
+/* ─────────────────────────────────────────
+   CALL / DOCS OVERLAY
+───────────────────────────────────────── */
+.call-ov {
+  display: none; position: fixed; inset: 0; z-index: 1100;
+  align-items: flex-start; justify-content: center;
+  background: rgba(10,20,50,.82); backdrop-filter: blur(6px);
+  padding: max(var(--sat),16px) 14px max(var(--sab),16px);
+  overflow-y: auto;
+}
+.call-ov.show { display: flex; animation: fadeIn .2s ease; }
+@keyframes fadeIn  { from{opacity:0} to{opacity:1} }
+
+.call-box {
+  width: 100%; max-width: 420px;
+  border-radius: 24px; overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,.4);
+  margin-top: 8px; animation: slideDown .25s cubic-bezier(.22,1,.36,1);
+}
+@keyframes slideDown { from{transform:translateY(-32px);opacity:0} to{transform:translateY(0);opacity:1} }
+
+/* Call header */
+.call-header {
+  background: linear-gradient(135deg, #1a2e6e, #2563eb);
+  padding: 28px 24px 22px; text-align: center; position: relative;
+}
+.call-wave {
+  position: absolute; bottom: -1px; left: 0; right: 0; height: 24px;
+  background: var(--surface); clip-path: ellipse(60% 100% at 50% 100%);
+}
+.call-bell  { font-size: 48px; display: block; margin-bottom: 8px; animation: bellRing .6s ease-in-out infinite alternate; }
+@keyframes bellRing { from{transform:rotate(-13deg)} to{transform:rotate(13deg)} }
+.call-title { font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 3px; }
+.call-sub   { font-size: 14px; color: rgba(255,255,255,.65); }
+
+/* Call body */
+.call-body { background: var(--surface); padding: 22px 20px 28px; }
+.call-dock-label { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .09em; text-align: center; margin-bottom: 5px; }
+.call-dock-num   { font-family: monospace; font-size: 88px; font-weight: 900; text-align: center; color: var(--blue); line-height: 1; }
+.call-stg-label  { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .09em; text-align: center; margin: 14px 0 6px; }
+.call-stg-val    {
+  font-family: monospace; font-size: 24px; font-weight: 800; text-align: center;
+  color: var(--purple); background: var(--purple-lt); border: 1.5px solid #c4b5fd;
+  border-radius: var(--r-md); padding: 9px 16px; display: inline-block; width: 100%;
+}
+.call-queue {
+  margin-top: 12px; padding: 12px 16px; border-radius: var(--r-md);
+  background: #f0f9ff; border: 1.5px solid #bae6fd;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.call-queue-lbl { font-size: 14px; color: #0369a1; font-weight: 600; }
+.call-queue-num { font-family: monospace; font-size: 22px; font-weight: 800; color: #0369a1; }
+.call-ack {
+  width: 100%; height: 56px; border: none; border-radius: var(--r-md); margin-top: 16px;
+  background: linear-gradient(135deg, var(--blue-dk), var(--blue)); color: #fff;
+  font-family: var(--font); font-size: 17px; font-weight: 800;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all .18s; box-shadow: 0 5px 18px rgba(37,99,235,.35);
+}
+.call-ack:active { transform: scale(.96); }
+
+/* Docs header */
+.docs-header { background: linear-gradient(135deg, var(--green-dk), var(--green)); padding: 28px 24px 22px; text-align: center; position: relative; }
+.docs-ico    { font-size: 48px; display: block; margin-bottom: 8px; animation: docsPop .5s ease-in-out infinite alternate; }
+@keyframes docsPop { from{transform:scale(1)} to{transform:scale(1.08)} }
+.docs-title  { font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 3px; }
+.docs-sub    { font-size: 14px; color: rgba(255,255,255,.65); }
+.docs-ack    {
+  width: 100%; height: 56px; border: none; border-radius: var(--r-md); margin-top: 16px;
+  background: linear-gradient(135deg, var(--green-dk), var(--green)); color: #fff;
+  font-family: var(--font); font-size: 17px; font-weight: 800;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all .18s; box-shadow: 0 5px 18px rgba(21,128,61,.35);
+}
+.docs-ack:active { transform: scale(.96); }
+
+/* ─────────────────────────────────────────
+   QR SCAN POPUP
+───────────────────────────────────────── */
+.qr-scan-box { max-width: 400px; }
+.qr-header   { padding: 20px 18px 16px; }
+.qr-tab-row  {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px;
+}
+.qr-tab-btn {
+  padding: 9px; border-radius: var(--r-md); border: 2px solid var(--border);
+  background: #f8fafc; color: var(--text2); font-family: var(--font);
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: all .15s;
+}
+.qr-tab-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+/* Camera panel */
+.qr-viewfinder {
+  position: relative; border-radius: var(--r-lg); overflow: hidden;
+  background: #111; aspect-ratio: 1/1;
+}
+.qr-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.qr-canvas { display: none; }
+.qr-placeholder {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px; background: #111;
+}
+/* Corner guides */
+.qr-corner {
+  position: absolute; width: 44px; height: 44px;
+  border: 3px solid #22c55e; pointer-events: none;
+}
+.qr-corner.tl { top: 12px; left: 12px; border-right: none; border-bottom: none; border-radius: 4px 0 0 0; }
+.qr-corner.tr { top: 12px; right: 12px; border-left:  none; border-bottom: none; border-radius: 0 4px 0 0; }
+.qr-corner.bl { bottom: 12px; left: 12px; border-right: none; border-top: none; border-radius: 0 0 0 4px; }
+.qr-corner.br { bottom: 12px; right: 12px; border-left:  none; border-top: none; border-radius: 0 0 4px 0; }
+/* Scan line */
+.qr-scanline {
+  position: absolute; left: 13%; right: 13%; height: 2px;
+  background: linear-gradient(90deg, transparent, #22c55e, transparent);
+  animation: scanLine 2s ease-in-out infinite;
+}
+@keyframes scanLine { 0%{top:13%} 50%{top:83%} 100%{top:13%} }
+
+.qr-msg {
+  margin-top: 10px; font-size: 13px; color: var(--text2); text-align: center;
+  line-height: 1.5; min-height: 36px;
+}
+.qr-msg.err { color: var(--red); }
+.qr-msg.ok  { color: var(--green); }
+
+.qr-open-btn {
+  width: 100%; margin-top: 10px; padding: 14px; border-radius: var(--r-md);
+  border: none; background: var(--blue); color: #fff;
+  font-family: var(--font); font-size: 15px; font-weight: 700; cursor: pointer;
+  transition: all .15s;
+}
+.qr-open-btn:active { transform: scale(.97); }
+
+/* Manual panel */
+.qr-manual-hint { font-size: 12px; color: var(--text2); margin-bottom: 9px; text-align: center; line-height: 1.5; }
+.qr-manual-inp {
+  width: 100%; height: 56px; border: 2px solid var(--border); border-radius: var(--r-md);
+  font-family: monospace; font-size: 30px; font-weight: 800; color: var(--text);
+  background: #fafafa; outline: none; text-align: center; letter-spacing: .1em;
+  text-transform: uppercase; margin-bottom: 10px; transition: border-color .15s, box-shadow .15s;
+}
+.qr-manual-inp:focus { border-color: var(--blue); background: #fff; box-shadow: 0 0 0 4px var(--blue-ring); }
+.qr-manual-inp::placeholder { font-family: var(--font); font-size: 13px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--text3); }
+.qr-confirm-btn {
+  width: 100%; padding: 15px; border-radius: var(--r-md); border: none;
+  background: var(--green); color: #fff; font-family: var(--font);
+  font-size: 16px; font-weight: 700; cursor: pointer; transition: all .15s;
+}
+.qr-confirm-btn:active { transform: scale(.97); }
+
+/* Toast */
+#toastF {
+  position: fixed; bottom: 20px; left: 50%;
+  transform: translateX(-50%) translateY(70px);
+  background: #1e293b; color: #fff; padding: 10px 18px;
+  border-radius: 10px; font-size: 13px; font-weight: 600;
+  z-index: 9999; transition: all .25s; opacity: 0;
+  max-width: 88vw; text-align: center; pointer-events: none;
+  font-family: var(--font);
+}
 </style>
 </head>
 <body>
+
 <div class="app">
+  <!-- TOP BAR -->
   <div class="topbar">
-    <div class="topbar-left">
+    <div>
       <div class="topbar-eyebrow">คลังสินค้า · Warehouse</div>
       <div class="topbar-title">🚛 Driver Portal</div>
     </div>
-    <div class="topbar-right">
-      <div class="clock-pill"><div class="clock-dot"></div><span id="clock">--:--:--</span></div>
+    <div class="clock-pill">
+      <div class="clock-dot"></div>
+      <span id="clock">--:--:--</span>
     </div>
   </div>
+
+  <!-- MODE BAR -->
   <div class="mode-bar">
     <div class="mtab m-in" id="tab-in" onclick="setMode('in')">
-      <span class="mtab-ico">🚛</span><span class="mtab-name">Check In</span><span class="mtab-desc">รถเข้าคลัง</span>
+      <span class="mtab-ico">🚛</span>
+      <span class="mtab-name">Check In</span>
+      <span class="mtab-desc">รถเข้าคลัง</span>
     </div>
     <div class="mtab" id="tab-out" onclick="setMode('out')">
-      <span class="mtab-ico">✅</span><span class="mtab-name">Check Out</span><span class="mtab-desc">ออกจากคลัง</span>
+      <span class="mtab-ico">✅</span>
+      <span class="mtab-name">Check Out</span>
+      <span class="mtab-desc">ออกจากคลัง</span>
     </div>
   </div>
+
+  <!-- SCROLL BODY -->
   <div class="body" id="app-body">
+
+    <!-- LOGIN / SEARCH FORM -->
     <div class="card" id="form-card">
       <div class="saved-strip" id="saved-strip" style="display:none">
         <div>
@@ -209,7 +585,8 @@ body{height:100%;background:var(--bg);font-family:var(--font);color:var(--text);
       </div>
       <div id="input-fields">
         <label class="label" for="inp-rider">RIDER ID <span>*</span></label>
-        <input class="inp-rider" id="inp-rider" type="text" placeholder="กรอก RIDER ID"
+        <input class="inp-rider" id="inp-rider" type="text"
+          placeholder="กรอก RIDER ID"
           autocomplete="off" spellcheck="false" inputmode="text" maxlength="30">
         <div class="rider-hint">รหัสประจำตัวคนขับที่ได้รับจากระบบ</div>
       </div>
@@ -217,12 +594,16 @@ body{height:100%;background:var(--bg);font-family:var(--font);color:var(--text);
         <span id="btn-ico">🚛</span><span id="btn-lbl">ค้นหาทริปของฉัน</span>
       </button>
     </div>
+
+    <!-- TRIP PICKER -->
     <div class="card" id="trip-picker" style="display:none">
       <div class="tp-title">🗓 เลือกทริปที่ต้องการ</div>
       <div class="tp-sub">พบหลายทริป — กรุณาเลือกทริปที่กำลังทำ</div>
       <div id="trip-list"></div>
       <div class="footer-link"><button class="back-link" onclick="clearSaved()">← ค้นหาใหม่</button></div>
     </div>
+
+    <!-- STATUS HERO -->
     <div id="status-hero" style="display:none" class="card">
       <div class="s-hero">
         <div>
@@ -238,26 +619,54 @@ body{height:100%;background:var(--bg);font-family:var(--font);color:var(--text);
           <div class="driver-id-t" id="driver-rid">—</div>
         </div>
       </div>
-      <div class="stepper" style="margin-top:17px">
+      <div class="stepper" style="margin-top:10px">
         <div class="step" id="stp-0"><div class="step-c">1</div><div class="step-lbl">รอรถ</div></div>
         <div class="step" id="stp-1"><div class="step-c">2</div><div class="step-lbl">Check In</div></div>
-        <div class="step" id="stp-2"><div class="step-c">3</div><div class="step-lbl">กำลังโหลด</div></div>
+        <div class="step" id="stp-2"><div class="step-c">3</div><div class="step-lbl">โหลด</div></div>
         <div class="step" id="stp-3"><div class="step-c">4</div><div class="step-lbl">Handover</div></div>
         <div class="step" id="stp-4"><div class="step-c">5</div><div class="step-lbl">Check Out</div></div>
       </div>
     </div>
+
+    <!-- STATUS INFO -->
     <div id="status-info" style="display:none" class="card">
       <div class="info-grid">
-        <div class="info-box span2"><div class="info-box-lbl">⏰ แผนโหลด</div><div class="info-box-val" id="ig-plan">—</div></div>
-        <div class="info-box span2"><div class="info-box-lbl">📦 SUB</div><div class="info-box-val" id="ig-sub">—</div></div>
-        <div class="info-box"><div class="info-box-lbl">🚛 Check In</div><div class="info-box-val ts" id="ig-ci">—</div></div>
-        <div class="info-box"><div class="info-box-lbl">📦 Checking</div><div class="info-box-val ts" id="ig-ck">—</div></div>
-        <div class="info-box"><div class="info-box-lbl">🤝 Handover</div><div class="info-box-val ts" id="ig-hv">—</div></div>
-        <div class="info-box"><div class="info-box-lbl">✅ Check Out</div><div class="info-box-val ts" id="ig-co">—</div></div>
-        <div class="info-box span2"><div class="info-box-lbl">📍 Staging</div><div id="ig-staging" class="staging-val">—</div></div>
-        <div class="info-box span2"><div class="info-box-lbl">🏗️ Dock</div><div id="ig-dock" class="dock-val">—</div></div>
+        <div class="info-box span2">
+          <div class="info-lbl">⏰ แผนโหลด</div>
+          <div class="info-val" id="ig-plan">—</div>
+        </div>
+        <div class="info-box span2">
+          <div class="info-lbl">📦 SUB</div>
+          <div class="info-val" id="ig-sub">—</div>
+        </div>
+        <div class="info-box">
+          <div class="info-lbl">Check In</div>
+          <div class="info-val ts" id="ig-ci">—</div>
+        </div>
+        <div class="info-box">
+          <div class="info-lbl">Checking</div>
+          <div class="info-val ts" id="ig-ck">—</div>
+        </div>
+        <div class="info-box">
+          <div class="info-lbl">Handover</div>
+          <div class="info-val ts" id="ig-hv">—</div>
+        </div>
+        <div class="info-box">
+          <div class="info-lbl">Check Out</div>
+          <div class="info-val ts" id="ig-co">—</div>
+        </div>
+        <div class="info-box span2">
+          <div class="info-lbl">📍 Staging</div>
+          <div id="ig-staging" class="staging-val">—</div>
+        </div>
+        <div class="info-box span2">
+          <div class="info-lbl">🏗️ Dock</div>
+          <div id="ig-dock" class="dock-val">—</div>
+        </div>
       </div>
     </div>
+
+    <!-- STATUS DOCS -->
     <div id="status-docs" style="display:none" class="card">
       <div class="doc-grid">
         <div class="doc-box wait" id="doc-lmn"><span>📋</span><span id="doc-lmn-txt">LMN: ยังไม่มี</span></div>
@@ -267,10 +676,18 @@ body{height:100%;background:var(--bg);font-family:var(--font);color:var(--text);
         ✅ พร้อมโหลด (RTL) — คิว <strong id="doc-queue-num">#—</strong>
       </div>
     </div>
-    <div id="status-action" style="display:none" class="card"><div id="action-strip"></div></div>
+
+    <!-- ACTION -->
+    <div id="status-action" style="display:none" class="card">
+      <div id="action-strip"></div>
+    </div>
+
+    <!-- BACK LINK -->
     <div id="status-back" style="display:none" class="footer-link">
       <button class="back-link" onclick="clearSaved()">← ค้นหาด้วย RIDER ID อื่น</button>
     </div>
+
+    <!-- RESULT -->
     <div id="result-wrap" style="display:none">
       <div class="result-card" id="result-card">
         <span class="r-ico" id="r-ico"></span>
@@ -280,16 +697,17 @@ body{height:100%;background:var(--bg);font-family:var(--font);color:var(--text);
         <button class="r-back" onclick="afterResult()">← กลับ</button>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- Call popup -->
+  </div><!-- /body -->
+</div><!-- /app -->
+
+<!-- ═══ CALL POPUP ═══ -->
 <div class="call-ov" id="call-popup">
   <div class="call-box">
     <div class="call-header">
       <span class="call-bell">🔔</span>
       <div class="call-title">เรียกเข้าช่องโหลด!</div>
-      <div class="call-sub">กรุณานำรถเข้าช่องโหลดสินค้าทันที</div>
+      <div class="call-sub">กรุณานำรถเข้าช่องโหลดทันที</div>
       <div class="call-wave"></div>
     </div>
     <div class="call-body">
@@ -297,20 +715,26 @@ body{height:100%;background:var(--bg);font-family:var(--font);color:var(--text);
       <div class="call-dock-num" id="cp-dock">—</div>
       <div class="call-stg-label">พื้นที่จัดสินค้า (Staging)</div>
       <div class="call-stg-val" id="cp-staging">—</div>
-      <div class="call-queue"><span class="call-queue-lbl">⏰ รอบโหลด</span><span class="call-queue-num" id="cp-planload" style="font-size:28px">—</span></div>
-      <div class="call-queue" style="margin-top:9.5px"><span class="call-queue-lbl">🎫 เลขคิว</span><span class="call-queue-num" id="cp-queue">#—</span></div>
+      <div class="call-queue">
+        <span class="call-queue-lbl">⏰ รอบโหลด</span>
+        <span class="call-queue-num" id="cp-planload">—</span>
+      </div>
+      <div class="call-queue" style="margin-top:8px">
+        <span class="call-queue-lbl">🎫 เลขคิว</span>
+        <span class="call-queue-num" id="cp-queue">#—</span>
+      </div>
       <button class="call-ack" onclick="openQrScanner()">📷 สแกน QR ยืนยันเข้าช่องโหลด</button>
     </div>
   </div>
 </div>
 
-<!-- Docs popup -->
+<!-- ═══ DOCS POPUP ═══ -->
 <div class="call-ov" id="docs-popup">
   <div class="call-box">
     <div class="docs-header">
       <span class="docs-ico">📄✅</span>
       <div class="docs-title">เอกสารครบแล้ว!</div>
-      <div class="docs-sub">กรุณาติดต่อเจ้าหน้าที่ เพื่อรับเอกสาร</div>
+      <div class="docs-sub">กรุณาติดต่อเจ้าหน้าที่รับเอกสาร</div>
       <div class="call-wave"></div>
     </div>
     <div class="call-body">
@@ -323,548 +747,569 @@ body{height:100%;background:var(--bg);font-family:var(--font);color:var(--text);
   </div>
 </div>
 
-<!-- QR Scan popup -->
+<!-- ═══ QR SCAN POPUP ═══ -->
 <div class="call-ov" id="qr-scan-popup">
-  <div class="call-box" style="max-width:520px">
-    <div class="call-header" style="padding:28px 24px 20px">
-      <span style="font-size:48px;display:block;margin-bottom:8px">📷</span>
-      <div class="call-title" style="font-size:26px">สแกน QR ยืนยันเข้าช่องโหลด</div>
-      <div class="call-sub" style="font-size:16px" id="qr-scan-target">ช่องโหลดของคุณ: —</div>
+  <div class="call-box qr-scan-box">
+    <div class="call-header qr-header">
+      <span style="font-size:36px;display:block;margin-bottom:6px">📷</span>
+      <div class="call-title" style="font-size:18px">สแกน QR ยืนยันเข้าช่องโหลด</div>
+      <div class="call-sub" id="qr-scan-target">ช่องของคุณ: —</div>
       <div class="call-wave"></div>
     </div>
-    <div class="call-body" style="padding:20px 20px 28px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-        <button id="qr-tab-cam" onclick="switchQrTab('cam')"
-          style="padding:10px;border-radius:12px;border:2px solid var(--blue);background:var(--blue);color:#fff;font-family:var(--font);font-size:16px;font-weight:700;cursor:pointer">
-          📷 สแกน QR
-        </button>
-        <button id="qr-tab-manual" onclick="switchQrTab('manual')"
-          style="padding:10px;border-radius:12px;border:2px solid var(--border);background:#f8fafc;color:var(--text2);font-family:var(--font);font-size:16px;font-weight:600;cursor:pointer">
-          ⌨️ พิมพ์รหัส
-        </button>
+    <div class="call-body">
+      <!-- Tab switcher -->
+      <div class="qr-tab-row">
+        <button class="qr-tab-btn active" id="qr-tab-cam"    onclick="switchQrTab('cam')">📷 สแกน QR</button>
+        <button class="qr-tab-btn"        id="qr-tab-manual" onclick="switchQrTab('manual')">⌨️ พิมพ์รหัส</button>
       </div>
+
+      <!-- Camera panel -->
       <div id="qr-panel-cam">
-        <div style="position:relative;border-radius:18px;overflow:hidden;background:#111;aspect-ratio:1/1">
-          <video id="qr-video" playsinline muted style="width:100%;height:100%;object-fit:cover;display:block"></video>
-          <canvas id="qr-canvas" style="display:none"></canvas>
-          <div id="qr-cam-placeholder" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#111">
-            <span style="font-size:48px">📷</span>
-            <span style="color:#fff;font-size:15px;text-align:center;padding:0 16px">กดปุ่มด้านล่างเพื่อเปิดกล้อง</span>
+        <div class="qr-viewfinder">
+          <video class="qr-video" id="qr-video" playsinline muted autoplay></video>
+          <canvas class="qr-canvas" id="qr-canvas"></canvas>
+          <div class="qr-placeholder" id="qr-placeholder">
+            <span style="font-size:40px">📷</span>
+            <span style="color:#fff;font-size:13px;text-align:center;padding:0 16px">กดปุ่มด้านล่างเพื่อเปิดกล้อง</span>
           </div>
-          <div style="position:absolute;inset:14%;border:3px solid #22c55e;border-radius:14px;pointer-events:none"></div>
+          <div class="qr-corner tl"></div>
+          <div class="qr-corner tr"></div>
+          <div class="qr-corner bl"></div>
+          <div class="qr-corner br"></div>
+          <div class="qr-scanline" id="qr-scanline" style="display:none"></div>
         </div>
-        <div id="qr-status-msg" style="margin-top:12px;font-size:15px;color:var(--text2);text-align:center;line-height:1.5;min-height:40px"></div>
-        <button id="qr-open-cam-btn" onclick="startQrCameraDirect()"
-          style="width:100%;margin-top:12px;padding:16px;border-radius:14px;border:none;background:var(--blue);color:#fff;font-family:var(--font);font-size:18px;font-weight:700;cursor:pointer">
-          🔓 เปิดกล้อง
-        </button>
+        <div class="qr-msg" id="qr-status-msg"></div>
+        <button class="qr-open-btn" id="qr-open-cam-btn" onclick="startQrCamera()">🔓 เปิดกล้อง</button>
       </div>
+
+      <!-- Manual panel -->
       <div id="qr-panel-manual" style="display:none">
-        <div style="font-size:15px;color:var(--text2);margin-bottom:10px;text-align:center">
+        <div class="qr-manual-hint">
           พิมพ์รหัสช่องโหลดที่ระบุบน QR Code<br>
-          <small style="color:var(--text3)">(เช่น A1, D3, 01)</small>
+          <small style="color:var(--text3)">(เช่น A1, D3, 001)</small>
         </div>
-        <input id="qr-manual-input" type="text" inputmode="text" placeholder="เช่น A1" maxlength="10"
-          autocomplete="off" spellcheck="false"
-          style="width:100%;height:72px;border:2.5px solid var(--border);border-radius:14px;font-family:monospace;font-size:40px;font-weight:800;color:var(--text);background:#fafafa;outline:none;text-align:center;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px"
+        <input class="qr-manual-inp" id="qr-manual-input" type="text" inputmode="text"
+          placeholder="เช่น A1" maxlength="10" autocomplete="off" spellcheck="false"
           oninput="this.value=this.value.toUpperCase().replace(/\s/g,'')"
           onkeydown="if(event.key==='Enter')submitManualDock()">
-        <button onclick="submitManualDock()"
-          style="width:100%;padding:18px;border-radius:14px;border:none;background:var(--green);color:#fff;font-family:var(--font);font-size:20px;font-weight:700;cursor:pointer">
-          ✅ ยืนยันเข้าช่องโหลด
-        </button>
+        <button class="qr-confirm-btn" onclick="submitManualDock()">✅ ยืนยันเข้าช่องโหลด</button>
       </div>
-      <button class="back-link" style="width:100%;margin-top:12px" onclick="closeQrScanner()">ยกเลิก / ปิด</button>
+
+      <button class="back-link" style="width:100%;margin-top:10px" onclick="closeQrScanner()">ยกเลิก / ปิด</button>
     </div>
   </div>
 </div>
 
+<!-- LOADING -->
 <div class="load-ov" id="loading">
   <div class="spin"></div>
   <div class="load-txt" id="load-txt">กำลังดำเนินการ…</div>
 </div>
 
-<script>
-// ╔══════════════════════════════════════════════════════╗
-// ║  แก้ตรงนี้จุดเดียว — ใส่ URL จาก Apps Script Deploy  ║
-// ╚══════════════════════════════════════════════════════╝
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKkuG4CvJY4w8XJuPGqffRj1Mjgvh69u1wUwIWFU96FxtBg4JWBccDtX19pX3WwW1vxQ/exec';
+<!-- TOAST -->
+<div id="toastF"></div>
 
-// ── fetch wrapper แทน google.script.run ──────────────────
+<!-- ═══════════════════════════════════════════════════
+     SCRIPT — ใช้ fetch() แทน google.script.run
+     เหมาะสำหรับ GitHub Pages หรือ standalone HTML
+═══════════════════════════════════════════════════ -->
+<script>
+// ╔══════════════════════════════════════════════════╗
+// ║  ใส่ URL จาก Apps Script Web App Deploy ที่นี่   ║
+// ╚══════════════════════════════════════════════════╝
+const SCRIPT_URL = 'YOUR_APPS_SCRIPT_EXEC_URL_HERE';
+
+/* fetch wrapper — POST JSON → Apps Script doPost */
 function callScript(fn, args) {
   return fetch(SCRIPT_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'text/plain' }, // text/plain ข้าม CORS preflight
-    body: JSON.stringify({ fn: fn, args: args || [] })
-  }).then(function(r) {
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ fn, args: args || [] })
+  }).then(r => {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return r.json();
   });
 }
 
-// ── constants ─────────────────────────────────────────────
+/* ── constants ── */
 const LS_RIDER='vlt_riderId', LS_TRIPID='vlt_tripId',
       LS_DOCS_ACKED='vlt_docsAcked', LS_CALL_ACKED='vlt_callAcked';
 const CALL_REMINDER_MS = 5*60*1000;
 const SPEAK_REPEAT_MS  = 15*1000;
 
 let mode='in', savedRiderId='', savedTripId='', currentTrip=null, liveTimer=null;
-let callAudioCtx=null, callAudioNodes=[], callReminderTimer=null, callVibrateTimer=null;
-let docsReminderTimer=null, callSpeakRepeatTimer=null, docsSpeakRepeatTimer=null;
-let speechKeepAliveTimer=null;
+let callAudioCtx=null, callAudioNodes=[], callVibrateTimer=null, callReminderTimer=null, docsReminderTimer=null;
+let callSpeakRepeatTimer=null, docsSpeakRepeatTimer=null, speechKeepAliveTimer=null;
 
-// ── TTS ───────────────────────────────────────────────────
+/* ─── TTS ─────────────────────────────── */
 let thaiVoice=null, voicesReady=false;
-function loadThaiVoice(){
-  if(!('speechSynthesis' in window))return;
-  const voices=speechSynthesis.getVoices();
-  if(!voices.length)return; voicesReady=true;
-  const th=voices.filter(v=>v.lang&&v.lang.toLowerCase().startsWith('th'));
-  if(!th.length){thaiVoice=null;return;}
-  thaiVoice=th.find(v=>/female|หญิง|kanya|premwadee/i.test(v.name))||th.find(v=>!/male|ชาย/i.test(v.name))||th[0];
+function loadThaiVoice() {
+  if (!('speechSynthesis' in window)) return;
+  const v = speechSynthesis.getVoices(); if (!v.length) return; voicesReady=true;
+  const th = v.filter(x => x.lang && x.lang.toLowerCase().startsWith('th'));
+  if (!th.length) return;
+  thaiVoice = th.find(x=>/female|หญิง|kanya|premwadee/i.test(x.name)) || th.find(x=>!/male|ชาย/i.test(x.name)) || th[0];
 }
-if('speechSynthesis' in window){loadThaiVoice();speechSynthesis.onvoiceschanged=loadThaiVoice;}
+if ('speechSynthesis' in window) { loadThaiVoice(); speechSynthesis.onvoiceschanged = loadThaiVoice; }
 
-function speak(text){
-  try{
-    if(!('speechSynthesis' in window))return;
-    if(!voicesReady)loadThaiVoice();
+function speak(text) {
+  try {
+    if (!('speechSynthesis' in window)) return;
+    if (!voicesReady) loadThaiVoice();
     speechSynthesis.cancel();
-    clearInterval(speechKeepAliveTimer);speechKeepAliveTimer=null;
-    setTimeout(()=>{
-      const u=new SpeechSynthesisUtterance(text);
-      u.lang='th-TH';u.pitch=1.25;u.rate=0.98;u.volume=1;
-      if(thaiVoice)u.voice=thaiVoice;
-      u.onstart=()=>{clearInterval(speechKeepAliveTimer);speechKeepAliveTimer=setInterval(()=>{if(!speechSynthesis.speaking){clearInterval(speechKeepAliveTimer);speechKeepAliveTimer=null;return;}speechSynthesis.pause();speechSynthesis.resume();},4000);};
-      u.onend=()=>{clearInterval(speechKeepAliveTimer);speechKeepAliveTimer=null;};
-      u.onerror=()=>{clearInterval(speechKeepAliveTimer);speechKeepAliveTimer=null;};
+    clearInterval(speechKeepAliveTimer); speechKeepAliveTimer=null;
+    setTimeout(() => {
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang='th-TH'; u.pitch=1.25; u.rate=0.98; u.volume=1;
+      if (thaiVoice) u.voice=thaiVoice;
+      u.onstart = () => {
+        clearInterval(speechKeepAliveTimer);
+        speechKeepAliveTimer = setInterval(() => {
+          if (!speechSynthesis.speaking) { clearInterval(speechKeepAliveTimer); speechKeepAliveTimer=null; return; }
+          speechSynthesis.pause(); speechSynthesis.resume();
+        }, 4000);
+      };
+      u.onend = () => { clearInterval(speechKeepAliveTimer); speechKeepAliveTimer=null; };
+      u.onerror = () => { clearInterval(speechKeepAliveTimer); speechKeepAliveTimer=null; };
       speechSynthesis.speak(u);
-    },80);
-  }catch(e){}
+    }, 80);
+  } catch(e) {}
 }
-function stopSpeak(){try{if('speechSynthesis' in window)speechSynthesis.cancel();clearInterval(speechKeepAliveTimer);speechKeepAliveTimer=null;}catch(e){}}
+function stopSpeak() {
+  try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch(e) {}
+  clearInterval(speechKeepAliveTimer); speechKeepAliveTimer=null;
+}
 
 let audioUnlocked=false;
-function unlockAudioOnce(){
-  if(audioUnlocked)return;audioUnlocked=true;
-  try{if('speechSynthesis' in window){const u=new SpeechSynthesisUtterance(' ');u.volume=0;u.lang='th-TH';speechSynthesis.speak(u);}}catch(e){}
+function unlockAudioOnce() {
+  if (audioUnlocked) return; audioUnlocked=true;
+  try { const u=new SpeechSynthesisUtterance(' '); u.volume=0; u.lang='th-TH'; speechSynthesis.speak(u); } catch(e) {}
 }
-document.addEventListener('touchend',unlockAudioOnce,{once:true,capture:true});
-document.addEventListener('click',unlockAudioOnce,{once:true,capture:true});
+document.addEventListener('touchend', unlockAudioOnce, {once:true,capture:true});
+document.addEventListener('click',    unlockAudioOnce, {once:true,capture:true});
 
-// ── ack helpers ───────────────────────────────────────────
-function isDocsAcked(id){return localStorage.getItem(LS_DOCS_ACKED)===String(id);}
-function setDocsAcked(id){localStorage.setItem(LS_DOCS_ACKED,String(id));}
-function clearDocsAcked(){localStorage.removeItem(LS_DOCS_ACKED);}
-function isCallAcked(id){try{const r=localStorage.getItem(LS_CALL_ACKED);if(!r)return false;const{id:i,ts}=JSON.parse(r);return i===String(id)&&(Date.now()-ts)<CALL_REMINDER_MS;}catch(e){return false;}}
-function setCallAcked(id){localStorage.setItem(LS_CALL_ACKED,JSON.stringify({id:String(id),ts:Date.now()}));}
-function clearCallAcked(){localStorage.removeItem(LS_CALL_ACKED);}
+/* ─── LS helpers ─────────────────────── */
+const isDocsAcked = id => localStorage.getItem(LS_DOCS_ACKED)===String(id);
+const setDocsAcked = id => localStorage.setItem(LS_DOCS_ACKED, String(id));
+const clearDocsAcked = () => localStorage.removeItem(LS_DOCS_ACKED);
+function isCallAcked(id) {
+  try { const r=localStorage.getItem(LS_CALL_ACKED); if(!r)return false; const{id:i,ts}=JSON.parse(r); return i===String(id)&&(Date.now()-ts)<CALL_REMINDER_MS; } catch(e){return false;}
+}
+const setCallAcked = id => localStorage.setItem(LS_CALL_ACKED, JSON.stringify({id:String(id),ts:Date.now()}));
+const clearCallAcked = () => localStorage.removeItem(LS_CALL_ACKED);
 
-// ── clock ─────────────────────────────────────────────────
-function tick(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
-setInterval(tick,1000);tick();
+/* ─── Clock ──────────────────────────── */
+const tick = () => document.getElementById('clock').textContent =
+  new Date().toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+setInterval(tick, 1000); tick();
 
-// ── mode ──────────────────────────────────────────────────
-(function(){const a=(new URLSearchParams(window.location.search).get('action')||'').toLowerCase();if(a==='checkout'||a==='out')setMode('out');})();
-function setMode(m){
-  mode=m;const isIn=m==='in';
-  document.getElementById('tab-in').className='mtab'+(isIn?' m-in':'');
-  document.getElementById('tab-out').className='mtab'+(isIn?'':' m-out');
+/* ─── Mode ───────────────────────────── */
+(function(){ const a=(new URLSearchParams(location.search).get('action')||'').toLowerCase(); if(a==='checkout'||a==='out') setMode('out'); })();
+function setMode(m) {
+  mode=m; const isIn=m==='in';
+  document.getElementById('tab-in').className  = 'mtab'+(isIn?' m-in':'');
+  document.getElementById('tab-out').className = 'mtab'+(isIn?'':' m-out');
   const btn=document.getElementById('submit-btn');
   btn.className='sbtn '+(isIn?'sbtn-in':'sbtn-out');
   document.getElementById('btn-ico').textContent=isIn?'🚛':'✅';
   document.getElementById('btn-lbl').textContent='ค้นหาทริปของฉัน';
-  if(currentTrip)updateActionBtn(currentTrip);
+  if (currentTrip) updateActionBtn(currentTrip);
 }
-document.getElementById('inp-rider').addEventListener('input',function(){this.value=this.value.toUpperCase().replace(/\s/g,'');});
-document.getElementById('inp-rider').addEventListener('keydown',function(e){if(e.key==='Enter')handleSubmit();});
+const $ = id => document.getElementById(id);
+document.getElementById('inp-rider').addEventListener('input', function(){ this.value=this.value.toUpperCase().replace(/\s/g,''); });
+document.getElementById('inp-rider').addEventListener('keydown', e => { if(e.key==='Enter') handleSubmit(); });
 
-// ── show/hide ─────────────────────────────────────────────
-function showLogin(){show('form-card');hide('trip-picker');hide('status-hero');hide('status-info');hide('status-docs');hide('status-action');hide('status-back');hide('result-wrap');}
-function showStatus(){hide('form-card');hide('trip-picker');hide('result-wrap');show('status-hero');show('status-info');show('status-docs');show('status-action');show('status-back');scrollTop();}
-function showPicker_(){hide('form-card');hide('status-hero');hide('status-info');hide('status-docs');hide('status-action');hide('status-back');hide('result-wrap');show('trip-picker');scrollTop();}
-function showResult_(){hide('form-card');hide('trip-picker');hide('status-hero');hide('status-info');hide('status-docs');hide('status-action');hide('status-back');show('result-wrap');scrollTop();}
-function show(id){document.getElementById(id).style.display='block';}
-function hide(id){document.getElementById(id).style.display='none';}
-function scrollTop(){try{document.getElementById('app-body').scrollTop=0;}catch(e){}}
+/* ─── Show/hide screens ──────────────── */
+function showLogin()   { sh('form-card');       hd('trip-picker');hd('status-hero');hd('status-info');hd('status-docs');hd('status-action');hd('status-back');hd('result-wrap'); }
+function showStatus()  { hd('form-card');hd('trip-picker');hd('result-wrap'); sh('status-hero');sh('status-info');sh('status-docs');sh('status-action');sh('status-back'); scrollTop(); }
+function showPicker_() { hd('form-card');hd('status-hero');hd('status-info');hd('status-docs');hd('status-action');hd('status-back');hd('result-wrap'); sh('trip-picker'); scrollTop(); }
+function showResult_() { hd('form-card');hd('trip-picker');hd('status-hero');hd('status-info');hd('status-docs');hd('status-action');hd('status-back'); sh('result-wrap'); scrollTop(); }
+const sh = id => { const el=$(id); if(el)el.style.display='block'; };
+const hd = id => { const el=$(id); if(el)el.style.display='none'; };
+const scrollTop = () => { try{ $('app-body').scrollTop=0; }catch(e){} };
 
-// ── saved rider ───────────────────────────────────────────
-function loadSaved(){
+/* ─── Saved rider ────────────────────── */
+function loadSaved() {
   savedRiderId=localStorage.getItem(LS_RIDER)||'';
-  savedTripId=localStorage.getItem(LS_TRIPID)||'';
-  if(savedRiderId){
-    document.getElementById('saved-strip').style.display='flex';
-    document.getElementById('input-fields').style.display='none';
-    document.getElementById('saved-label').textContent='🪪 '+savedRiderId;
-    if(savedTripId)refreshStatus();
+  savedTripId =localStorage.getItem(LS_TRIPID)||'';
+  if (savedRiderId) {
+    $('saved-strip').style.display='flex';
+    $('input-fields').style.display='none';
+    $('saved-label').textContent='🪪 '+savedRiderId;
+    if (savedTripId) refreshStatus();
   }
 }
-function clearSaved(){
-  localStorage.removeItem(LS_RIDER);localStorage.removeItem(LS_TRIPID);
-  clearDocsAcked();clearCallAcked();
-  savedRiderId='';savedTripId='';currentTrip=null;
+function clearSaved() {
+  localStorage.removeItem(LS_RIDER); localStorage.removeItem(LS_TRIPID);
+  clearDocsAcked(); clearCallAcked();
+  savedRiderId=''; savedTripId=''; currentTrip=null;
   clearLiveTimer();
-  hideCallPopup();clearTimeout(callReminderTimer);
-  hideDocsPopup();clearTimeout(docsReminderTimer);
-  document.getElementById('saved-strip').style.display='none';
-  document.getElementById('input-fields').style.display='block';
-  document.getElementById('inp-rider').value='';
-  setMode(mode);showLogin();
+  hideCallPopup(); clearTimeout(callReminderTimer);
+  hideDocsPopup(); clearTimeout(docsReminderTimer);
+  $('saved-strip').style.display='none';
+  $('input-fields').style.display='block';
+  $('inp-rider').value='';
+  setMode(mode); showLogin();
 }
 
-// ── submit / find trip ────────────────────────────────────
-function handleSubmit(){
-  const riderId=savedRiderId||document.getElementById('inp-rider').value.trim().toUpperCase();
-  if(!riderId){alert('กรุณากรอก RIDER ID');document.getElementById('inp-rider').focus();return;}
+/* ─── Search / trip ──────────────────── */
+function handleSubmit() {
+  const riderId=savedRiderId||$('inp-rider').value.trim().toUpperCase();
+  if(!riderId){ alert('กรุณากรอก RIDER ID'); $('inp-rider').focus(); return; }
   showLoad('กำลังค้นหาทริป…');
   callScript('findTripsForDriver',[riderId])
-    .then(res=>{hideLoad();onFound(res,riderId);})
-    .catch(e=>{hideLoad();showResult('err','❌','เกิดข้อผิดพลาด',e.message);});
+    .then(res=>{ hideLoad(); onFound(res,riderId); })
+    .catch(e=>{ hideLoad(); showResult('err','❌','เกิดข้อผิดพลาด',e.message); });
 }
-function onFound(res,riderId){
-  if(!res.success){showResult('err','⚠️',res.warn?'ไม่สามารถดำเนินการ':'เกิดข้อผิดพลาด',res.error||'',null,res.warn?'warn':'err');return;}
-  savedRiderId=riderId;localStorage.setItem(LS_RIDER,riderId);
-  if(res.single)selectTrip(res.trip);else showPicker(res.trips);
+function onFound(res,riderId) {
+  if(!res.success){ showResult('err','⚠️',res.warn?'ไม่สามารถดำเนินการ':'เกิดข้อผิดพลาด',res.error||'',null,res.warn?'warn':'err'); return; }
+  savedRiderId=riderId; localStorage.setItem(LS_RIDER,riderId);
+  if(res.single) selectTrip(res.trip); else showPicker(res.trips);
 }
 
-function showPicker(trips){
+function showPicker(trips) {
   showPicker_();
-  const stC={'รอรถ':'#64748b','รถเข้า':'#2563eb','กำลังโหลด':'#7c3aed','ส่งงาน':'#d97706'};
+  const stC ={'รอรถ':'#64748b','รถเข้า':'#2563eb','กำลังโหลด':'#7c3aed','ส่งงาน':'#d97706'};
   const stBg={'รอรถ':'#f8fafc','รถเข้า':'#eff6ff','กำลังโหลด':'#f5f3ff','ส่งงาน':'#fffbeb'};
-  document.getElementById('trip-list').innerHTML=trips.map((t,i)=>`
+  $('trip-list').innerHTML = trips.map((t,i)=>`
     <div class="trip-opt" onclick='selectTrip(${JSON.stringify(t).replace(/'/g,"&#39;")})'>
       <div class="to-num">${i+1}</div>
       <div class="to-info">
         <div class="to-trip">${esc(t.tripNumber||t.tripId)}</div>
-        <div class="to-meta">📅 ${t.planDate}&nbsp;&nbsp;⏰ ${t.planLoad}&nbsp;&nbsp;📦 ${t.sub}</div>
+        <div class="to-meta">📅 ${t.planDate}&nbsp; ⏰ ${t.planLoad}&nbsp; 📦 ${t.sub}</div>
         <span class="to-badge" style="color:${stC[t.status]||'#64748b'};background:${stBg[t.status]||'#f8fafc'}">${t.status}</span>
       </div>
     </div>`).join('');
 }
-function selectTrip(trip){currentTrip=trip;savedTripId=trip.tripId;localStorage.setItem(LS_TRIPID,trip.tripId);showStatusCard(trip);}
+function selectTrip(trip) { currentTrip=trip; savedTripId=trip.tripId; localStorage.setItem(LS_TRIPID,trip.tripId); showStatusCard(trip); }
 
-// ── status card ───────────────────────────────────────────
-function showStatusCard(trip){
-  showStatus();currentTrip=trip;
-  document.getElementById('st-plate').textContent=trip.vehicleNumber||'—';
-  document.getElementById('st-trip-number').textContent=trip.tripNumber?'เลขทริป: '+trip.tripNumber:'—';
+/* ─── Status card ────────────────────── */
+function showStatusCard(trip) {
+  showStatus(); currentTrip=trip;
+  $('st-plate').textContent=trip.vehicleNumber||'—';
+  $('st-trip-number').textContent=trip.tripNumber?'เลขทริป: '+trip.tripNumber:'—';
   if(trip.driverName){
-    document.getElementById('driver-chip').style.display='flex';
-    const init=(trip.driverName).split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
-    document.getElementById('driver-av').textContent=init;
-    document.getElementById('driver-name').textContent=trip.driverName;
-    document.getElementById('driver-rid').textContent='ID: '+savedRiderId;
+    $('driver-chip').style.display='flex';
+    $('driver-av').textContent=(trip.driverName).split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
+    $('driver-name').textContent=trip.driverName;
+    $('driver-rid').textContent='ID: '+savedRiderId;
   }
-  document.getElementById('ig-plan').textContent=trip.planLoad||'—';
-  document.getElementById('ig-sub').textContent=trip.sub||'—';
-  const setTi=(id,v)=>{const el=document.getElementById(id);el.textContent=v||'—';el.className='info-box-val ts'+(v?'':' na');};
-  setTi('ig-ci',trip.checkIn);setTi('ig-ck',trip.checking);setTi('ig-hv',trip.handover);setTi('ig-co',trip.checkOut);
-  const dockEl=document.getElementById('ig-dock');
-  if(trip.dock){dockEl.className='dock-val';dockEl.textContent=trip.dock;}
-  else{dockEl.className='dock-na';dockEl.textContent='Admin ยังไม่ได้ระบุ';}
-  const stgEl=document.getElementById('ig-staging');
-  if(trip.stagingArea){stgEl.className='staging-val';stgEl.textContent=trip.stagingArea;}
-  else{stgEl.className='staging-na';stgEl.textContent='Admin ยังไม่ได้ระบุ';}
-  if(trip.docLmn){document.getElementById('doc-lmn').className='doc-box ready';document.getElementById('doc-lmn-txt').textContent='LMN: พร้อม ✓';}
-  else{document.getElementById('doc-lmn').className='doc-box wait';document.getElementById('doc-lmn-txt').textContent='LMN: ยังไม่มี';}
-  if(trip.docInv){document.getElementById('doc-inv').className='doc-box ready';document.getElementById('doc-inv-txt').textContent='INVOICE: พร้อม ✓';}
-  else{document.getElementById('doc-inv').className='doc-box wait';document.getElementById('doc-inv-txt').textContent='INVOICE: ยังไม่มี';}
-  const rcvBox=document.getElementById('doc-rcv-box');
-  if(trip.rtl){rcvBox.style.display='block';document.getElementById('doc-queue-num').textContent='#'+(trip.rtlQueue||'—');}
+  $('ig-plan').textContent=trip.planLoad||'—';
+  $('ig-sub').textContent=trip.sub||'—';
+  const setT=(id,v)=>{ const el=$(id); el.textContent=v||'—'; el.className='info-val ts'+(v?'':' na'); };
+  setT('ig-ci',trip.checkIn); setT('ig-ck',trip.checking); setT('ig-hv',trip.handover); setT('ig-co',trip.checkOut);
+  const dockEl=$('ig-dock');
+  if(trip.dock){ dockEl.className='dock-val'; dockEl.textContent=trip.dock; }
+  else{ dockEl.className='dock-na'; dockEl.textContent='Admin ยังไม่ได้ระบุ'; }
+  const stgEl=$('ig-staging');
+  if(trip.stagingArea){ stgEl.className='staging-val'; stgEl.textContent=trip.stagingArea; }
+  else{ stgEl.className='staging-na'; stgEl.textContent='Admin ยังไม่ได้ระบุ'; }
+  if(trip.docLmn){ $('doc-lmn').className='doc-box ready'; $('doc-lmn-txt').textContent='LMN: พร้อม ✓'; }
+  else{ $('doc-lmn').className='doc-box wait'; $('doc-lmn-txt').textContent='LMN: ยังไม่มี'; }
+  if(trip.docInv){ $('doc-inv').className='doc-box ready'; $('doc-inv-txt').textContent='INVOICE: พร้อม ✓'; }
+  else{ $('doc-inv').className='doc-box wait'; $('doc-inv-txt').textContent='INVOICE: ยังไม่มี'; }
+  const rcvBox=$('doc-rcv-box');
+  if(trip.rtl){ rcvBox.style.display='block'; $('doc-queue-num').textContent='#'+(trip.rtlQueue||'—'); }
   else rcvBox.style.display='none';
-  updateStepper(trip.status);updateActionBtn(trip);clearLiveTimer();
-  if(trip.checkIn&&!trip.checkOut){liveTimer=setInterval(()=>updateLive(trip.checkIn),30000);updateLive(trip.checkIn);}
-  checkAndTriggerCall(trip);checkAndTriggerDocsPopup(trip);
+  updateStepper(trip.status); updateActionBtn(trip); clearLiveTimer();
+  if(trip.checkIn&&!trip.checkOut){ liveTimer=setInterval(()=>updateLive(trip.checkIn),30000); updateLive(trip.checkIn); }
+  checkAndTriggerCall(trip); checkAndTriggerDocsPopup(trip);
 }
 
-function updateStepper(status){
-  const order=['รอรถ','รถเข้า','กำลังโหลด','ส่งงาน','ออกจากคลัง'],idx=order.indexOf(status);
+function updateStepper(status) {
+  const order=['รอรถ','รถเข้า','กำลังโหลด','ส่งงาน','ออกจากคลัง'], idx=order.indexOf(status);
   for(let i=0;i<5;i++){
-    const el=document.getElementById('stp-'+i);el.classList.remove('done','active');
-    if(i<idx){el.classList.add('done');el.querySelector('.step-c').textContent='✓';}
-    else if(i===idx)el.classList.add('active');
+    const el=$('stp-'+i); el.classList.remove('done','active');
+    if(i<idx){ el.classList.add('done'); el.querySelector('.step-c').textContent='✓'; }
+    else if(i===idx) el.classList.add('active');
     else el.querySelector('.step-c').textContent=i+1;
   }
 }
-function updateActionBtn(trip){
-  const strip=document.getElementById('action-strip');
-  const hasCI=!!trip.checkIn,hasHV=!!trip.handover,hasCO=!!trip.checkOut;
-  if(hasCO){strip.innerHTML=`<div class="notice notice-green">🎉 <strong>Check Out เรียบร้อยแล้ว</strong></div>`;return;}
-  if(mode==='in'&&!hasCI){strip.innerHTML=`<button class="abtn-full abtn-ci" onclick="doAction('checkIn')">🚛 บันทึก Check In</button>`;}
-  else if(mode==='out'&&hasHV&&!hasCO){
-    if(!trip.docLmn||!trip.docInv){const m=(!trip.docLmn&&!trip.docInv)?'LMN + Invoice':!trip.docLmn?'LMN':'INVOICE';strip.innerHTML=`<div class="notice notice-red">❌ ยังไม่ได้รับ <strong>${m}</strong><br><small>กรุณาติดต่อเจ้าหน้าที่</small></div>`;}
-    else strip.innerHTML=`<button class="abtn-full abtn-co" onclick="doAction('checkOut')">✅ บันทึก Check Out</button>`;
-  }else if(mode==='out'&&!hasHV){strip.innerHTML=`<div class="notice notice-amber">⚠️ ยังไม่ผ่าน <strong>Handover</strong><br><small>กรุณาติดต่อเจ้าหน้าที่</small></div>`;}
-  else if(mode==='in'&&hasCI){strip.innerHTML=`<div class="notice notice-blue">✓ Check In แล้ว (${trip.checkIn})<br><small>สลับไป "Check Out" เมื่อต้องการออก</small></div>`;}
-  else strip.innerHTML=`<div class="notice notice-blue" style="color:var(--text2)">กรุณาเลือกโหมดด้านบน</div>`;
+function updateActionBtn(trip) {
+  const strip=$('action-strip');
+  const hasCI=!!trip.checkIn, hasHV=!!trip.handover, hasCO=!!trip.checkOut;
+  if(hasCO){ strip.innerHTML=`<div class="notice notice-green">🎉 <strong>Check Out เรียบร้อยแล้ว</strong></div>`; return; }
+  if(mode==='in'&&!hasCI)
+    strip.innerHTML=`<button class="abtn-full abtn-ci" onclick="doAction('checkIn')">🚛 บันทึก Check In</button>`;
+  else if(mode==='out'&&hasHV&&!hasCO) {
+    if(!trip.docLmn||!trip.docInv) {
+      const m=(!trip.docLmn&&!trip.docInv)?'LMN + Invoice':!trip.docLmn?'LMN':'INVOICE';
+      strip.innerHTML=`<div class="notice notice-red">❌ ยังไม่ได้รับ <strong>${m}</strong><br><small>กรุณาติดต่อเจ้าหน้าที่</small></div>`;
+    } else strip.innerHTML=`<button class="abtn-full abtn-co" onclick="doAction('checkOut')">✅ บันทึก Check Out</button>`;
+  } else if(mode==='out'&&!hasHV)
+    strip.innerHTML=`<div class="notice notice-amber">⚠️ ยังไม่ผ่าน <strong>Handover</strong><br><small>กรุณาติดต่อเจ้าหน้าที่</small></div>`;
+  else if(mode==='in'&&hasCI)
+    strip.innerHTML=`<div class="notice notice-blue">✓ Check In แล้ว (${trip.checkIn})<br><small>สลับไป "Check Out" เมื่อต้องการออก</small></div>`;
+  else
+    strip.innerHTML=`<div class="notice notice-blue" style="color:var(--text2)">กรุณาเลือกโหมดด้านบน</div>`;
 }
-function updateLive(ci){if(!ci)return;const[h,m]=ci.split(':').map(Number),s=new Date();s.setHours(h,m,0,0);const mins=Math.floor((new Date()-s)/60000),dh=Math.floor(mins/60),dm=mins%60;const el=document.getElementById('ig-total');if(el)el.textContent=(dh>0?dh+'h ':'')+dm+'m (กำลังนับ)';}
-function clearLiveTimer(){if(liveTimer){clearInterval(liveTimer);liveTimer=null;}}
+function updateLive(ci) {
+  if(!ci)return;
+  const[h,m]=ci.split(':').map(Number),s=new Date();s.setHours(h,m,0,0);
+  const mins=Math.floor((new Date()-s)/60000),dh=Math.floor(mins/60),dm=mins%60;
+  // no ig-total in current layout, just skip silently
+}
+function clearLiveTimer(){ if(liveTimer){clearInterval(liveTimer);liveTimer=null;} }
 
-function refreshStatus(){
-  if(!savedRiderId)return;
-  showLoad('กำลังอัปเดต…');
+function refreshStatus() {
+  if(!savedRiderId)return; showLoad('กำลังอัปเดต…');
   callScript('findTripsForDriver',[savedRiderId])
-    .then(res=>{
-      hideLoad();
-      if(!res.success){showToastF(res.error||'โหลดไม่ได้','err');return;}
-      const t=res.single?res.trip:(res.trips||[]).find(x=>x.tripId===savedTripId);
-      if(t){currentTrip=t;showStatusCard(t);}
-    })
-    .catch(e=>{hideLoad();showToastF(e.message,'err');});
+    .then(res=>{ hideLoad(); if(!res.success){showToast(res.error||'โหลดไม่ได้','err');return;} const t=res.single?res.trip:(res.trips||[]).find(x=>x.tripId===savedTripId); if(t){currentTrip=t;showStatusCard(t);} })
+    .catch(e=>{ hideLoad(); showToast(e.message,'err'); });
 }
 
-// ── check in / out ────────────────────────────────────────
-function doAction(action){
-  if(!currentTrip)return;
-  showLoad('กำลังตรวจสอบตำแหน่ง…');
-  if(navigator.geolocation){
+/* ─── Check in/out ───────────────────── */
+function doAction(action) {
+  if(!currentTrip)return; showLoad('กำลังตรวจสอบตำแหน่ง…');
+  if(navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       pos=>submitAction(action,pos.coords.latitude,pos.coords.longitude),
-      err=>{hideLoad();showResult('err','❌','ไม่สามารถระบุตำแหน่ง',err.code===1?'กรุณาอนุญาตการเข้าถึงตำแหน่ง':'กรุณาเปิด GPS แล้วลองอีกครั้ง');},
+      err=>{ hideLoad(); showResult('err','❌','ไม่สามารถระบุตำแหน่ง',err.code===1?'กรุณาอนุญาตการเข้าถึงตำแหน่ง':'กรุณาเปิด GPS แล้วลองอีกครั้ง'); },
       {enableHighAccuracy:true,timeout:15000,maximumAge:0}
     );
-  }else{hideLoad();showResult('err','❌','ไม่รองรับ GPS','กรุณาใช้เบราว์เซอร์ที่รองรับ Geolocation');}
+  } else { hideLoad(); showResult('err','❌','ไม่รองรับ GPS','กรุณาใช้เบราว์เซอร์ที่รองรับ Geolocation'); }
 }
-function submitAction(action,lat,lng){
+function submitAction(action,lat,lng) {
   showLoad(action==='checkIn'?'กำลังบันทึก Check In…':'กำลังบันทึก Check Out…');
   callScript('handleDriverAction',[currentTrip.tripId,savedRiderId,action,lat,lng])
     .then(res=>{
       hideLoad();
       if(res.success){
-        if(action==='checkOut'){localStorage.removeItem(LS_TRIPID);savedTripId='';clearDocsAcked();clearCallAcked();}
+        if(action==='checkOut'){ localStorage.removeItem(LS_TRIPID); savedTripId=''; clearDocsAcked(); clearCallAcked(); }
         showResult('ok',action==='checkIn'?'🎉':'👋',
           action==='checkIn'?'Check In สำเร็จ!':'Check Out สำเร็จ!',
           action==='checkIn'?'บันทึกการเข้าคลังเรียบร้อย':'ขอบคุณ — บันทึกออกจากคลังแล้ว',
           {'RIDER ID':savedRiderId,'ทะเบียน':res.vehicleNumber,'คนขับ':res.driverName,'ทริป':res.tripNumber||res.tripId,'เวลา':res.timestamp,...(res.totalTime?{'เวลารวม':res.totalTime}:{})});
-      }else{
-        showResult(res.warn?'warn':'err',res.warn?'⚠️':'❌',res.warn?'ไม่สามารถดำเนินการ':'เกิดข้อผิดพลาด',res.error||'');
-      }
+      } else showResult(res.warn?'warn':'err',res.warn?'⚠️':'❌',res.warn?'ไม่สามารถดำเนินการ':'เกิดข้อผิดพลาด',res.error||'');
     })
-    .catch(e=>{hideLoad();showResult('err','❌','เกิดข้อผิดพลาด',e.message);});
+    .catch(e=>{ hideLoad(); showResult('err','❌','เกิดข้อผิดพลาด',e.message); });
 }
 
-function showResult(type,ico,title,detail,meta){
+function showResult(type,ico,title,detail,meta) {
   showResult_();
-  document.getElementById('result-card').className='result-card '+type;
-  document.getElementById('r-ico').textContent=ico;
-  document.getElementById('r-title').textContent=title;
-  document.getElementById('r-detail').textContent=detail||'';
-  const mEl=document.getElementById('r-meta');
-  if(meta&&Object.keys(meta).length){mEl.style.display='block';mEl.innerHTML=Object.entries(meta).map(([k,v])=>`<div class="r-row"><span class="r-key">${k}</span><span class="r-val">${esc(v)}</span></div>`).join('');}
+  $('result-card').className='result-card '+type;
+  $('r-ico').textContent=ico; $('r-title').textContent=title; $('r-detail').textContent=detail||'';
+  const mEl=$('r-meta');
+  if(meta&&Object.keys(meta).length){ mEl.style.display='block'; mEl.innerHTML=Object.entries(meta).map(([k,v])=>`<div class="r-row"><span class="r-key">${k}</span><span class="r-val">${esc(v)}</span></div>`).join(''); }
   else mEl.style.display='none';
 }
-function afterResult(){
-  if(savedRiderId){
-    document.getElementById('saved-strip').style.display='flex';
-    document.getElementById('input-fields').style.display='none';
-    document.getElementById('saved-label').textContent='🪪 '+savedRiderId;
-    if(savedTripId)refreshStatus();else showLogin();
-  }else showLogin();
+function afterResult() {
+  if(savedRiderId){ $('saved-strip').style.display='flex'; $('input-fields').style.display='none'; $('saved-label').textContent='🪪 '+savedRiderId; if(savedTripId)refreshStatus();else showLogin(); }
+  else showLogin();
 }
 
-// ── Call popup ────────────────────────────────────────────
-function shouldShowCall(trip){
+/* ─── Call popup ─────────────────────── */
+function shouldShowCall(trip) {
   if(!trip||!trip.checkIn)return false;
-  const st=String(trip.status||'');
-  if(['กำลังโหลด','ส่งงาน','ออกจากคลัง'].includes(st))return false;
+  if(['กำลังโหลด','ส่งงาน','ออกจากคลัง'].includes(String(trip.status||'')))return false;
   return !!trip.dock&&!!trip.rtl&&!!trip.rtlQueue;
 }
-function showCallPopup(trip){
-  const popup=document.getElementById('call-popup'),already=popup.classList.contains('show');
-  document.getElementById('cp-dock').textContent=trip.dock||'—';
-  document.getElementById('cp-staging').textContent=trip.stagingArea||'—';
-  document.getElementById('cp-queue').textContent='#'+(trip.rtlQueue||'—');
-  document.getElementById('cp-planload').textContent=trip.planLoad||'—';
+function showCallPopup(trip) {
+  const popup=$('call-popup'), already=popup.classList.contains('show');
+  $('cp-dock').textContent=trip.dock||'—'; $('cp-staging').textContent=trip.stagingArea||'—';
+  $('cp-queue').textContent='#'+(trip.rtlQueue||'—'); $('cp-planload').textContent=trip.planLoad||'—';
   popup.classList.add('show');
   if(!already){
-    startCallSound();startVibrate();
+    startCallSound(); startVibrate();
     const sayIt=()=>speak(`กรุณานำรถเข้าช่องโหลดสินค้าทันที ช่องโหลดของคุณคือ ช่อง ${trip.dock||'-'} ลำดับคิวของคุณคือ คิวที่ ${trip.rtlQueue||'-'} กรุณากดรับทราบด้วยค่ะ ขอบคุณค่ะ`);
-    setTimeout(sayIt,500);
-    clearInterval(callSpeakRepeatTimer);callSpeakRepeatTimer=setInterval(sayIt,SPEAK_REPEAT_MS);
+    setTimeout(sayIt,500); clearInterval(callSpeakRepeatTimer); callSpeakRepeatTimer=setInterval(sayIt,SPEAK_REPEAT_MS);
   }
 }
-function hideCallPopup(){
-  document.getElementById('call-popup').classList.remove('show');
-  stopCallSound();stopVibrate();stopSpeak();
-  clearInterval(callSpeakRepeatTimer);callSpeakRepeatTimer=null;
+function hideCallPopup() {
+  $('call-popup').classList.remove('show');
+  stopCallSound(); stopVibrate(); stopSpeak();
+  clearInterval(callSpeakRepeatTimer); callSpeakRepeatTimer=null;
 }
-function startCallSound(){
+function startCallSound() {
   stopCallSound();
   try{
     callAudioCtx=new(window.AudioContext||window.webkitAudioContext)();
-    const comp=callAudioCtx.createDynamicsCompressor();comp.threshold.value=-6;comp.knee.value=3;comp.ratio.value=4;comp.attack.value=0.002;comp.release.value=0.1;comp.connect(callAudioCtx.destination);
-    const master=callAudioCtx.createGain();master.gain.value=1.0;master.connect(comp);
-    function playBeep(){if(!callAudioCtx)return;[{freq:880,t:0,dur:.22},{freq:880,t:.28,dur:.22},{freq:1100,t:.56,dur:.35}].forEach(({freq,t,dur})=>{const osc=callAudioCtx.createOscillator(),env=callAudioCtx.createGain();osc.connect(env);env.connect(master);osc.type='triangle';osc.frequency.setValueAtTime(freq,callAudioCtx.currentTime+t);env.gain.setValueAtTime(0,callAudioCtx.currentTime+t);env.gain.linearRampToValueAtTime(1.0,callAudioCtx.currentTime+t+.015);env.gain.exponentialRampToValueAtTime(.001,callAudioCtx.currentTime+t+dur);osc.start(callAudioCtx.currentTime+t);osc.stop(callAudioCtx.currentTime+t+dur+.01);callAudioNodes.push(osc);});}
-    playBeep();const ti=setInterval(()=>{if(!callAudioCtx){clearInterval(ti);return;}playBeep();},2200);callAudioNodes.push({stop:()=>clearInterval(ti)});
+    const comp=callAudioCtx.createDynamicsCompressor(); comp.threshold.value=-6;comp.knee.value=3;comp.ratio.value=4;comp.attack.value=.002;comp.release.value=.1; comp.connect(callAudioCtx.destination);
+    const master=callAudioCtx.createGain(); master.gain.value=1; master.connect(comp);
+    function playBeep(){ if(!callAudioCtx)return; [{freq:880,t:0,dur:.22},{freq:880,t:.28,dur:.22},{freq:1100,t:.56,dur:.35}].forEach(({freq,t,dur})=>{ const osc=callAudioCtx.createOscillator(),env=callAudioCtx.createGain(); osc.connect(env);env.connect(master);osc.type='triangle'; osc.frequency.setValueAtTime(freq,callAudioCtx.currentTime+t); env.gain.setValueAtTime(0,callAudioCtx.currentTime+t); env.gain.linearRampToValueAtTime(1,callAudioCtx.currentTime+t+.015); env.gain.exponentialRampToValueAtTime(.001,callAudioCtx.currentTime+t+dur); osc.start(callAudioCtx.currentTime+t); osc.stop(callAudioCtx.currentTime+t+dur+.01); callAudioNodes.push(osc); }); }
+    playBeep(); const ti=setInterval(()=>{ if(!callAudioCtx){clearInterval(ti);return;} playBeep(); },2200); callAudioNodes.push({stop:()=>clearInterval(ti)});
   }catch(e){}
 }
-function stopCallSound(){if(callAudioCtx){try{callAudioCtx.close();}catch(e){}callAudioCtx=null;}callAudioNodes.forEach(n=>{try{n.stop&&n.stop();}catch(e){}});callAudioNodes=[];}
-function startVibrate(){stopVibrate();if(!navigator.vibrate)return;const p=[400,200,400,200,600];navigator.vibrate(p);callVibrateTimer=setInterval(()=>navigator.vibrate(p),2500);}
-function stopVibrate(){if(callVibrateTimer){clearInterval(callVibrateTimer);callVibrateTimer=null;}if(navigator.vibrate)navigator.vibrate(0);}
-function checkAndTriggerCall(trip){
-  if(['กำลังโหลด','ส่งงาน','ออกจากคลัง'].includes(String(trip.status||''))){clearCallAcked();clearTimeout(callReminderTimer);hideCallPopup();return;}
-  if(shouldShowCall(trip)&&!isCallAcked(trip.tripId))showCallPopup(trip);
+function stopCallSound(){ if(callAudioCtx){try{callAudioCtx.close();}catch(e){}callAudioCtx=null;} callAudioNodes.forEach(n=>{try{n.stop&&n.stop();}catch(e){}});callAudioNodes=[]; }
+function startVibrate(){ stopVibrate(); if(!navigator.vibrate)return; const p=[400,200,400,200,600]; navigator.vibrate(p); callVibrateTimer=setInterval(()=>navigator.vibrate(p),2500); }
+function stopVibrate(){ if(callVibrateTimer){clearInterval(callVibrateTimer);callVibrateTimer=null;} if(navigator.vibrate)navigator.vibrate(0); }
+function checkAndTriggerCall(trip) {
+  if(['กำลังโหลด','ส่งงาน','ออกจากคลัง'].includes(String(trip.status||''))){ clearCallAcked();clearTimeout(callReminderTimer);hideCallPopup();return; }
+  if(shouldShowCall(trip)&&!isCallAcked(trip.tripId)) showCallPopup(trip);
   else if(!shouldShowCall(trip)){clearCallAcked();hideCallPopup();}
 }
 
-// ── Docs popup ────────────────────────────────────────────
-function shouldShowDocsPopup(trip){
+/* ─── Docs popup ─────────────────────── */
+function shouldShowDocsPopup(trip) {
   if(!trip||!trip.checkIn)return false;
   if(String(trip.status||'')==='ออกจากคลัง')return false;
   if(trip.docReceiving)return false;
   return !!trip.docLmn&&!!trip.docInv;
 }
-function showDocsPopup(){
-  const popup=document.getElementById('docs-popup'),already=popup.classList.contains('show');
-  popup.classList.add('show');
-  if(!already){
-    playDocsBeep();if(navigator.vibrate)navigator.vibrate([300,150,300]);
-    const sayIt=()=>speak('เอกสารพร้อมแล้วค่ะ! กรุณาติดต่อเจ้าหน้าที่ เพื่อรับเอกสาร และกดรับทราบด้วยค่ะ ขอบคุณค่ะ');
-    setTimeout(sayIt,300);clearInterval(docsSpeakRepeatTimer);docsSpeakRepeatTimer=setInterval(sayIt,SPEAK_REPEAT_MS);
-  }
+function showDocsPopup() {
+  const popup=$('docs-popup'),already=popup.classList.contains('show'); popup.classList.add('show');
+  if(!already){ playDocsBeep(); if(navigator.vibrate)navigator.vibrate([300,150,300]); const sayIt=()=>speak('เอกสารพร้อมแล้วค่ะ! กรุณาติดต่อเจ้าหน้าที่ เพื่อรับเอกสาร และกดรับทราบด้วยค่ะ ขอบคุณค่ะ'); setTimeout(sayIt,300); clearInterval(docsSpeakRepeatTimer); docsSpeakRepeatTimer=setInterval(sayIt,SPEAK_REPEAT_MS); }
 }
-function hideDocsPopup(){document.getElementById('docs-popup').classList.remove('show');stopSpeak();clearInterval(docsSpeakRepeatTimer);docsSpeakRepeatTimer=null;}
+function hideDocsPopup(){ $('docs-popup').classList.remove('show'); stopSpeak(); clearInterval(docsSpeakRepeatTimer); docsSpeakRepeatTimer=null; }
 function playDocsBeep(){
-  try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[{freq:660,t:0},{freq:880,t:.16}].forEach(({freq,t})=>{const osc=ctx.createOscillator(),env=ctx.createGain();osc.connect(env);env.connect(ctx.destination);osc.type='sine';osc.frequency.setValueAtTime(freq,ctx.currentTime+t);env.gain.setValueAtTime(0,ctx.currentTime+t);env.gain.linearRampToValueAtTime(.7,ctx.currentTime+t+.02);env.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+t+.35);osc.start(ctx.currentTime+t);osc.stop(ctx.currentTime+t+.36);});setTimeout(()=>{try{ctx.close();}catch(e){}},600);}catch(e){}
+  try{ const ctx=new(window.AudioContext||window.webkitAudioContext)(); [{freq:660,t:0},{freq:880,t:.16}].forEach(({freq,t})=>{ const osc=ctx.createOscillator(),env=ctx.createGain(); osc.connect(env);env.connect(ctx.destination);osc.type='sine'; osc.frequency.setValueAtTime(freq,ctx.currentTime+t); env.gain.setValueAtTime(0,ctx.currentTime+t); env.gain.linearRampToValueAtTime(.7,ctx.currentTime+t+.02); env.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+t+.35); osc.start(ctx.currentTime+t); osc.stop(ctx.currentTime+t+.36); }); setTimeout(()=>{try{ctx.close();}catch(e){}},600); }catch(e){}
 }
-function acknowledgeDocsReady(){
-  if(!currentTrip)return;
-  hideDocsPopup();setDocsAcked(currentTrip.tripId);clearTimeout(docsReminderTimer);
-  docsReminderTimer=setTimeout(()=>{if(!currentTrip)return;if(shouldShowDocsPopup(currentTrip)){clearDocsAcked();showDocsPopup();}},CALL_REMINDER_MS);
-  callScript('acknowledgeDocsReady',[currentTrip.tripId,savedRiderId])
-    .then(res=>{if(res&&res.success)showToastF('รับทราบเอกสารครบแล้ว ✓','ok');})
-    .catch(()=>{});
+function acknowledgeDocsReady() {
+  if(!currentTrip)return; hideDocsPopup(); setDocsAcked(currentTrip.tripId); clearTimeout(docsReminderTimer);
+  docsReminderTimer=setTimeout(()=>{ if(!currentTrip)return; if(shouldShowDocsPopup(currentTrip)){clearDocsAcked();showDocsPopup();} },CALL_REMINDER_MS);
+  callScript('acknowledgeDocsReady',[currentTrip.tripId,savedRiderId]).then(res=>{if(res&&res.success)showToast('รับทราบเอกสารครบแล้ว ✓','ok');}).catch(()=>{});
 }
-function checkAndTriggerDocsPopup(trip){
+function checkAndTriggerDocsPopup(trip) {
   if(String(trip.status||'')==='ออกจากคลัง'){clearDocsAcked();clearTimeout(docsReminderTimer);hideDocsPopup();return;}
-  if(shouldShowDocsPopup(trip)&&!isDocsAcked(trip.tripId))showDocsPopup();
+  if(shouldShowDocsPopup(trip)&&!isDocsAcked(trip.tripId)) showDocsPopup();
   else if(!shouldShowDocsPopup(trip)){clearDocsAcked();hideDocsPopup();}
 }
 
-// ── QR Scanner ────────────────────────────────────────────
-let qrStream=null,qrRAF=null,qrScanning=false;
+/* ─── QR Scanner ─────────────────────── */
+let qrStream=null, qrRAF=null, qrScanning=false;
 
-function switchQrTab(tab){
+function switchQrTab(tab) {
   const isCam=tab==='cam';
-  document.getElementById('qr-panel-cam').style.display=isCam?'block':'none';
-  document.getElementById('qr-panel-manual').style.display=isCam?'none':'block';
-  const bc=document.getElementById('qr-tab-cam'),bm=document.getElementById('qr-tab-manual');
-  bc.style.background=isCam?'var(--blue)':'#f8fafc';bc.style.color=isCam?'#fff':'var(--text2)';bc.style.borderColor=isCam?'var(--blue)':'var(--border)';
-  bm.style.background=isCam?'#f8fafc':'var(--blue)';bm.style.color=isCam?'var(--text2)':'#fff';bm.style.borderColor=isCam?'var(--border)':'var(--blue)';
-  if(!isCam){stopQrCamera();setTimeout(()=>document.getElementById('qr-manual-input').focus(),100);}
+  $('qr-panel-cam').style.display    = isCam?'block':'none';
+  $('qr-panel-manual').style.display = isCam?'none':'block';
+  $('qr-tab-cam').classList.toggle('active',isCam);
+  $('qr-tab-manual').classList.toggle('active',!isCam);
+  if(!isCam){ stopQrStream(); setTimeout(()=>$('qr-manual-input').focus(),120); }
 }
-function openQrScanner(){
-  if(!currentTrip)return;
-  document.getElementById('qr-scan-target').textContent='ช่องโหลดของคุณ: ช่อง '+(currentTrip.dock||'—');
-  document.getElementById('qr-status-msg').textContent='';
-  document.getElementById('qr-manual-input').value='';
-  const ph=document.getElementById('qr-cam-placeholder');if(ph)ph.style.display='flex';
-  switchQrTab('cam');
-  document.getElementById('qr-scan-popup').classList.add('show');
-}
-function closeQrScanner(){document.getElementById('qr-scan-popup').classList.remove('show');stopQrCamera();}
 
-function startQrCameraDirect(){
-  const btn=document.getElementById('qr-open-cam-btn');
-  const msg=document.getElementById('qr-status-msg');
-  const ph=document.getElementById('qr-cam-placeholder');
+function openQrScanner() {
+  if(!currentTrip)return;
+  $('qr-scan-target').textContent='ช่องของคุณ: ช่อง '+(currentTrip.dock||'—');
+  $('qr-status-msg').textContent='';
+  $('qr-status-msg').className='qr-msg';
+  $('qr-manual-input').value='';
+  const ph=$('qr-placeholder'); if(ph)ph.style.display='flex';
+  const sl=$('qr-scanline');    if(sl)sl.style.display='none';
+  switchQrTab('cam');
+  $('qr-scan-popup').classList.add('show');
+}
+function closeQrScanner() { $('qr-scan-popup').classList.remove('show'); stopQrStream(); }
+
+function startQrCamera() {
+  const btn=$('qr-open-cam-btn'), msg=$('qr-status-msg'), ph=$('qr-placeholder');
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
-    msg.innerHTML='❌ เบราว์เซอร์ไม่รองรับกล้อง<br><small>กรุณาสลับไปแท็บ "พิมพ์รหัส" แทน</small>';return;
+    setQrMsg('❌ เบราว์เซอร์ไม่รองรับกล้อง — กรุณาใช้แท็บ "พิมพ์รหัส"','err'); return;
   }
-  btn.disabled=true;btn.textContent='⏳ กำลังขอสิทธิ์กล้อง…';msg.textContent='';stopQrCamera();
-  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}})
-    .catch(()=>navigator.mediaDevices.getUserMedia({video:true}))
-    .then(function(stream){
+  btn.disabled=true; btn.textContent='⏳ กำลังขอสิทธิ์กล้อง…';
+  setQrMsg(''); stopQrStream();
+
+  const tryStream = constraints =>
+    navigator.mediaDevices.getUserMedia(constraints);
+
+  tryStream({video:{facingMode:{ideal:'environment'}}})
+    .catch(()=>tryStream({video:{facingMode:'environment'}}))
+    .catch(()=>tryStream({video:true}))
+    .then(stream=>{
       qrStream=stream;
-      const video=document.getElementById('qr-video');
-      video.srcObject=stream;video.muted=true;video.setAttribute('muted','');video.playsInline=true;video.setAttribute('playsinline','');
+      const video=$('qr-video');
+      video.srcObject=stream; video.muted=true; video.playsInline=true;
       if(ph)ph.style.display='none';
-      msg.textContent='📍 หันกล้องไปที่ QR Code บนช่องโหลด';
-      btn.textContent='🔄 รีสตาร์ทกล้อง';btn.disabled=false;
-      var pp=video.play();if(pp!==undefined)pp.catch(function(e){console.warn('play():',e);});
-      video.addEventListener('loadeddata',function onL(){video.removeEventListener('loadeddata',onL);qrScanning=true;qrTick();},{once:true});
-      setTimeout(function(){if(!qrScanning&&qrStream){qrScanning=true;qrTick();}},2000);
+      const sl=$('qr-scanline'); if(sl)sl.style.display='block';
+      setQrMsg('📍 หันกล้องไปที่ QR Code บนช่องโหลด');
+      btn.disabled=false; btn.textContent='🔄 รีสตาร์ทกล้อง';
+      video.play().catch(e=>console.warn('video.play:',e));
+      // เริ่ม decode หลังจาก video มีข้อมูลพอ
+      video.addEventListener('loadeddata',function onL(){
+        video.removeEventListener('loadeddata',onL);
+        qrScanning=true; qrTick();
+      },{once:true});
+      setTimeout(()=>{ if(!qrScanning&&qrStream){qrScanning=true;qrTick();} },2000);
     })
-    .catch(function(err){
-      console.warn('getUserMedia:',err.name,err.message);
-      btn.disabled=false;btn.textContent='🔓 ลองเปิดกล้องอีกครั้ง';
-      var hint='';
-      if(err.name==='NotAllowedError')hint='คุณปฏิเสธสิทธิ์กล้องไปแล้ว<br><small>แตะ 🔒 ข้าง URL → กล้อง → "อนุญาต" → รีเฟรชหน้า</small>';
-      else if(err.name==='NotFoundError')hint='ไม่พบกล้องในอุปกรณ์นี้';
-      else if(err.name==='NotReadableError')hint='กล้องถูกใช้งานโดยแอปอื่น ปิดแล้วลองใหม่';
-      else hint='เกิดข้อผิดพลาด: '+err.name;
-      msg.innerHTML='⚠️ '+hint+'<br><br><button onclick="switchQrTab(\'manual\')" style="padding:10px 20px;border-radius:10px;border:2px solid var(--blue);background:var(--blue-lt);color:var(--blue);font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer">⌨️ สลับไปพิมพ์รหัสแทน</button>';
+    .catch(err=>{
+      btn.disabled=false; btn.textContent='🔓 ลองเปิดกล้องอีกครั้ง';
+      let hint='';
+      if(err.name==='NotAllowedError'||err.name==='PermissionDeniedError')
+        hint='คุณปฏิเสธสิทธิ์กล้อง\nแตะ 🔒 ข้าง URL → กล้อง → อนุญาต → รีโหลดหน้า';
+      else if(err.name==='NotFoundError')     hint='ไม่พบกล้องในอุปกรณ์นี้';
+      else if(err.name==='NotReadableError')  hint='กล้องถูกใช้งานโดยแอปอื่น ปิดแล้วลองใหม่';
+      else if(err.name==='SecurityError')     hint='ต้องเปิด URL นี้ตรงๆ ในเบราว์เซอร์ ไม่ใช่ใน iframe';
+      else hint='ข้อผิดพลาด: '+err.name;
+      setQrMsg('⚠️ '+hint+'\n\nหรือสลับแท็บ "พิมพ์รหัส"','err');
     });
 }
-function stopQrCamera(){qrScanning=false;if(qrRAF){cancelAnimationFrame(qrRAF);qrRAF=null;}if(qrStream){qrStream.getTracks().forEach(function(t){t.stop();});qrStream=null;}}
-function qrTick(){
+
+function stopQrStream() {
+  qrScanning=false;
+  if(qrRAF){cancelAnimationFrame(qrRAF);qrRAF=null;}
+  if(qrStream){qrStream.getTracks().forEach(t=>t.stop());qrStream=null;}
+  const video=$('qr-video'); if(video)video.srcObject=null;
+}
+
+function qrTick() {
   if(!qrScanning)return;
-  var video=document.getElementById('qr-video'),canvas=document.getElementById('qr-canvas');
+  const video=$('qr-video'), canvas=$('qr-canvas');
   if(video.readyState>=2&&video.videoWidth>0){
-    canvas.width=video.videoWidth;canvas.height=video.videoHeight;
-    var ctx=canvas.getContext('2d');ctx.drawImage(video,0,0,canvas.width,canvas.height);
-    var img=ctx.getImageData(0,0,canvas.width,canvas.height);
-    var code=jsQR(img.data,img.width,img.height);
-    if(code&&code.data){onQrDetected(code.data.trim());return;}
+    canvas.width=video.videoWidth; canvas.height=video.videoHeight;
+    const ctx=canvas.getContext('2d'); ctx.drawImage(video,0,0,canvas.width,canvas.height);
+    const img=ctx.getImageData(0,0,canvas.width,canvas.height);
+    try{ const code=jsQR(img.data,img.width,img.height); if(code&&code.data){onQrDetected(code.data.trim());return;} }catch(e){}
   }
   qrRAF=requestAnimationFrame(qrTick);
 }
-function submitManualDock(){
-  var val=(document.getElementById('qr-manual-input').value||'').trim().toUpperCase();
+
+function submitManualDock() {
+  const val=($('qr-manual-input').value||'').trim().toUpperCase();
   if(!val){alert('กรุณากรอกรหัสช่องโหลด');return;}
   onQrDetected(val);
 }
-function onQrDetected(text){
+
+function onQrDetected(text) {
   qrScanning=false;
-  var msg=document.getElementById('qr-status-msg');
-  if(msg)msg.textContent='⏳ กำลังตรวจสอบ…';
+  setQrMsg('⏳ กำลังตรวจสอบ…');
   callScript('confirmDockArrival',[currentTrip.tripId,savedRiderId,text])
-    .then(function(res){
+    .then(res=>{
       if(res.success){
-        stopQrCamera();
-        document.getElementById('qr-scan-popup').classList.remove('show');
-        hideCallPopup();setCallAcked(currentTrip.tripId);
-        showToastF('ยืนยันเข้าช่องโหลด ✓ เริ่มสถานะ "กำลังโหลด"','ok');
+        stopQrStream(); closeQrScanner(); hideCallPopup(); setCallAcked(currentTrip.tripId);
+        showToast('✓ ยืนยันเข้าช่องโหลด — เริ่มสถานะ "กำลังโหลด"','ok');
         refreshStatus();
-      }else{
-        if(msg)msg.innerHTML='⚠️ '+esc(res.error||'QR ไม่ถูกต้อง')+'<br><small>ลองสแกนใหม่ หรือสลับแท็บ "พิมพ์รหัส"</small>';
+      } else {
+        setQrMsg((res.warn?'⚠️':'❌')+' '+(res.error||'QR ไม่ถูกต้อง')+'\n\nลองสแกนใหม่ หรือสลับแท็บ "พิมพ์รหัส"','err');
         if(qrStream){qrScanning=true;qrTick();}
       }
     })
-    .catch(function(e){if(msg)msg.textContent='❌ '+e.message;if(qrStream){qrScanning=true;qrTick();}});
+    .catch(e=>{ setQrMsg('❌ '+e.message,'err'); if(qrStream){qrScanning=true;qrTick();} });
 }
 
-// ── utils ─────────────────────────────────────────────────
-function showLoad(msg){document.getElementById('load-txt').textContent=msg||'กำลังดำเนินการ…';document.getElementById('loading').classList.add('show');}
-function hideLoad(){document.getElementById('loading').classList.remove('show');}
-let tF;
-function showToastF(msg,type){
-  let t=document.getElementById('toastF');
-  if(!t){t=document.createElement('div');t.id='toastF';Object.assign(t.style,{position:'fixed',bottom:'29px',left:'50%',transform:'translateX(-50%) translateY(84px)',background:'#1e293b',color:'#fff',padding:'12px 22px',borderRadius:'12px',fontSize:'15.5px',fontWeight:'600',zIndex:'9999',transition:'all .25s',opacity:'0',maxWidth:'90vw',textAlign:'center'});document.body.appendChild(t);}
-  t.textContent=msg;t.style.background=type==='err'?'#dc2626':'#15803d';
-  requestAnimationFrame(()=>{t.style.transform='translateX(-50%) translateY(0)';t.style.opacity='1';});
-  clearTimeout(tF);tF=setTimeout(()=>{t.style.transform='translateX(-50%) translateY(84px)';t.style.opacity='0';},3000);
+function setQrMsg(text,cls='') {
+  const el=$('qr-status-msg'); if(!el)return;
+  el.textContent=text; el.className='qr-msg'+(cls?' '+cls:'');
 }
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-// ── auto refresh ──────────────────────────────────────────
+/* ─── Misc utils ─────────────────────── */
+function showLoad(msg){ $('load-txt').textContent=msg||'กำลังดำเนินการ…'; $('loading').classList.add('show'); }
+function hideLoad(){ $('loading').classList.remove('show'); }
+
+let tFTimer;
+function showToast(msg,type){
+  const t=$('toastF');
+  t.textContent=msg;
+  t.style.background=type==='err'?'#dc2626':'#15803d';
+  t.style.transform='translateX(-50%) translateY(0)'; t.style.opacity='1';
+  clearTimeout(tFTimer);
+  tFTimer=setTimeout(()=>{ t.style.transform='translateX(-50%) translateY(70px)'; t.style.opacity='0'; },3000);
+}
+
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+/* ─── Auto-refresh ───────────────────── */
 let arTimer=null;
-function startAutoRefresh(){
+function startAutoRefresh() {
   clearInterval(arTimer);
   arTimer=setInterval(()=>{
-    if(savedRiderId&&savedTripId&&!document.getElementById('loading').classList.contains('show')){
+    if(savedRiderId&&savedTripId&&!$('loading').classList.contains('show')){
       callScript('findTripsForDriver',[savedRiderId])
-        .then(res=>{
-          if(!res.success)return;
-          const t=res.single?res.trip:(res.trips||[]).find(x=>x.tripId===savedTripId);
-          if(t){currentTrip=t;showStatusCard(t);}
-        }).catch(()=>{});
+        .then(res=>{ if(!res.success)return; const t=res.single?res.trip:(res.trips||[]).find(x=>x.tripId===savedTripId); if(t){currentTrip=t;showStatusCard(t);} })
+        .catch(()=>{});
     }
-  },10000);
+  },12000);
 }
 
-document.addEventListener('DOMContentLoaded',()=>{loadSaved();startAutoRefresh();});
+document.addEventListener('DOMContentLoaded',()=>{ loadSaved(); startAutoRefresh(); });
 </script>
 </body>
 </html>
