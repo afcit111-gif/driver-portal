@@ -987,7 +987,7 @@ function selectTrip(trip) { currentTrip=trip; savedTripId=trip.tripId; localStor
 function showStatusCard(trip) {
   showStatus(); currentTrip=trip;
   $('st-plate').textContent=trip.vehicleNumber||'—';
-  $('st-trip-number').textContent=trip.tripNumber?'เลขทริป: '+trip.tripNumber:'—';
+  $('st-trip-number').textContent=trip.tripNumber?''+trip.tripNumber:'—';
   if(trip.driverName){
     $('driver-chip').style.display='flex';
     $('driver-av').textContent=(trip.driverName).split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
