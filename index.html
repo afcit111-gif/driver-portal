@@ -11,6 +11,9 @@
 <title>Driver Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<!-- Firebase SDK (compat) — สำหรับ FCM push notification -->
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js"></script>
 <style>
 /* ═══════════════════════════════════════════
    TOKEN SYSTEM
@@ -921,6 +924,24 @@ const CALL_REMINDER_MS = 5*60*1000;
 const SPEAK_REPEAT_MS  = 15*1000;
 
 /* ═══════════════════════════════════════════
+   FIREBASE / FCM CONFIG
+   ค่าเหล่านี้เป็น public config (ไม่ใช่ secret) ใส่ใน client ได้ปลอดภัย
+═══════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBczbrdQn9eWhQQg_phzaNGps5PKvPPar4",
+  authDomain: "vlt-notification.firebaseapp.com",
+  projectId: "vlt-notification",
+  storageBucket: "vlt-notification.firebasestorage.app",
+  messagingSenderId: "868115123925",
+  appId: "1:868115123925:web:a738b460e7e139bc965c5c"
+};
+/* VAPID key (Web Push certificate) จาก Firebase Console > Project Settings > Cloud Messaging */
+const FCM_VAPID_KEY = "BAAp3mG-lPEZ2Nm4X_iIxTw9LFz6dSrNRez0hL4fjABgH-B3elCq6X9YQRO1eRHVHiGj9DzwWp8vjAeDmyx5aSM";
+const LS_FCM_TOKEN = 'vlt_fcmToken';
+
+let fbApp=null, messaging=null, fcmToken=null;
+
+/* ═══════════════════════════════════════════
    PUSH-STYLE NOTIFICATIONS (เวลาไม่ได้เปิดหน้าจอ)
 ═══════════════════════════════════════════ */
 let swReg=null;
@@ -980,9 +1001,16 @@ function updateNotifyUI(){
   const perm=Notification.permission;
   if(perm==='granted'){
     btn.classList.add('on'); dot.style.display='none';
-    txt.textContent='เปิดใช้งานแล้ว — จะแจ้งเตือนตอนแอปเปิด/สลับไปแอปอื่นชั่วคราว';
-    tbtn.textContent='เปิดอยู่ ✓'; tbtn.className='notify-toggle-btn is-on'; tbtn.disabled=false;
-    hint.textContent='หมายเหตุ: ถ้าปิดแอปสนิทหรือล็อกหน้าจอนาน เบราว์เซอร์อาจหยุดทำงานเบื้องหลัง แจ้งเตือนจะมาช้า/ไม่มาได้';
+    const hasToken = !!(fcmToken || localStorage.getItem(LS_FCM_TOKEN));
+    if(hasToken){
+      txt.textContent='เปิดใช้งานแล้ว — จะแจ้งเตือนแม้ปิดแอปอยู่ (FCM)';
+      tbtn.textContent='เปิดอยู่ ✓'; tbtn.className='notify-toggle-btn is-on'; tbtn.disabled=false;
+      hint.textContent='ระบบใช้ Firebase Cloud Messaging — แจ้งเตือนจะมาถึงแม้ปิดแอปหรือล็อกหน้าจอ';
+    } else {
+      txt.textContent='ได้รับสิทธิ์แล้ว แต่ยังไม่ได้ลงทะเบียนรับ push';
+      tbtn.textContent='ลงทะเบียนรับแจ้งเตือน'; tbtn.className='notify-toggle-btn'; tbtn.disabled=false;
+      hint.textContent='กดปุ่มเพื่อลงทะเบียนอุปกรณ์นี้สำหรับรับ push notification';
+    }
   } else if(perm==='denied'){
     btn.classList.remove('on'); dot.style.display='block';
     txt.textContent='ถูกบล็อก — กรุณาเปิดสิทธิ์แจ้งเตือนในตั้งค่าเบราว์เซอร์';
@@ -1003,14 +1031,111 @@ function requestNotifyPermission(){
   if(Notification.permission==='denied'){
     showToast('กรุณาเปิดสิทธิ์แจ้งเตือนจากตั้งค่าเบราว์เซอร์ของคุณ','err'); return;
   }
-  Notification.requestPermission().then(perm=>{
-    updateNotifyUI();
-    if(perm==='granted'){
-      showToast('เปิดการแจ้งเตือนสำเร็จ ✓','ok');
-      sendBgNotification('🔔 เปิดการแจ้งเตือนแล้ว','ระบบจะแจ้งเตือนตอนแอปเปิด/สลับแอปชั่วคราวอยู่',{tag:'notify-test',silent:true});
-      registerSW();
-    } else {
+  initFCM();
+}
+
+/* ═══════════════════════════════════════════
+   FCM (Firebase Cloud Messaging)
+   ─ ขอ permission → register service worker → ขอ FCM token
+   ─ token นี้คือ "ที่อยู่" ของเครื่องนี้ที่ backend จะใช้ยิง push เข้ามา
+   ─ ตอนนี้ backend (Apps Script) ยังไม่รองรับการรับ-เก็บ token
+     ฟังก์ชัน sendTokenToBackend() เป็น stub ไว้ก่อน รอเชื่อมทีหลัง
+═══════════════════════════════════════════ */
+async function initFCM(){
+  showLoad('กำลังเปิดใช้งานการแจ้งเตือน…');
+  try{
+    if(!('serviceWorker' in navigator)){
+      hideLoad(); showToast('เบราว์เซอร์นี้ไม่รองรับ Service Worker','err'); return;
+    }
+
+    // 1) ขอ permission ก่อน (FCM getToken ต้องการ permission='granted')
+    const perm = await Notification.requestPermission();
+    if(perm!=='granted'){
+      hideLoad(); updateNotifyUI();
       showToast('ไม่ได้รับสิทธิ์การแจ้งเตือน','err');
+      return;
+    }
+
+    // 2) register service worker (sw.js) — ใช้ตัวเดียวกับที่ FCM SDK ใช้รับ background message
+    const reg = await navigator.serviceWorker.register('sw.js');
+    swReg = reg;
+    await navigator.serviceWorker.ready;
+
+    // 3) init Firebase app + messaging (กันเรียกซ้ำ)
+    if(!fbApp){
+      fbApp = firebase.initializeApp(firebaseConfig);
+      messaging = firebase.messaging();
+      setupForegroundMessages();
+    }
+
+    // 4) ขอ FCM token ผูกกับ service worker ที่ลงทะเบียนไว้
+    const token = await messaging.getToken({
+      vapidKey: FCM_VAPID_KEY,
+      serviceWorkerRegistration: reg
+    });
+
+    if(!token){
+      hideLoad();
+      showToast('ขอ token แจ้งเตือนไม่สำเร็จ ลองใหม่อีกครั้ง','err');
+      updateNotifyUI();
+      return;
+    }
+
+    fcmToken = token;
+    localStorage.setItem(LS_FCM_TOKEN, token);
+    console.log('[FCM] token:', token);
+
+    // 5) ส่ง token ไปเก็บที่ backend (รอเชื่อมกับ Apps Script ภายหลัง)
+    sendTokenToBackend(token);
+
+    hideLoad();
+    updateNotifyUI();
+    showToast('เปิดการแจ้งเตือนสำเร็จ ✓','ok');
+    // แจ้งเตือนทดสอบแบบ local เพื่อยืนยันว่า notification permission ทำงานจริง
+    sendBgNotification('🔔 เปิดการแจ้งเตือนแล้ว','ระบบจะแจ้งเตือนแม้ปิดแอปอยู่ (ผ่าน FCM)',{tag:'notify-test',silent:true});
+
+  }catch(err){
+    console.error('[FCM] initFCM error:', err);
+    hideLoad();
+    showToast('เกิดข้อผิดพลาดในการเปิดแจ้งเตือน: '+(err.message||err),'err');
+    updateNotifyUI();
+  }
+}
+
+/* TODO: เชื่อมกับ Google Apps Script เมื่อฝั่ง backend พร้อม
+   แนวทาง: เพิ่มฟังก์ชัน saveDriverFcmToken(riderId, token) ฝั่ง .gs
+   แล้วเรียกผ่าน callScript('saveDriverFcmToken',[savedRiderId, token]) ตรงนี้ */
+function sendTokenToBackend(token){
+  if(!savedRiderId){
+    console.log('[FCM] ยังไม่ได้ login (ไม่มี savedRiderId) — จะส่ง token ตอน login สำเร็จแทน');
+    return;
+  }
+  // callScript('saveDriverFcmToken',[savedRiderId, token])
+  //   .then(res=>console.log('[FCM] บันทึก token ที่ backend สำเร็จ', res))
+  //   .catch(e=>console.warn('[FCM] บันทึก token ที่ backend ไม่สำเร็จ', e));
+  console.log('[FCM] (stub) จะส่ง token ไป backend สำหรับ riderId=', savedRiderId, 'token=', token);
+}
+
+/* รับ push ตอนแอปเปิดอยู่ (foreground)
+   ─ FCM จะ "ไม่" auto-show system notification ตอน foreground
+     ต้องจัดการแสดงผลเอง (ใช้ sendBgNotification เดิม หรือ popup ในแอปก็ได้) */
+function setupForegroundMessages(){
+  if(!messaging)return;
+  messaging.onMessage((payload)=>{
+    console.log('[FCM] foreground message:', payload);
+    const data = payload.data || {};
+    const notif = payload.notification || {};
+    const title = notif.title || data.title || 'Driver Portal';
+    const body  = notif.body  || data.body  || '';
+    sendBgNotification(title, body, {
+      tag: data.tag || 'fcm-foreground',
+      requireInteraction: data.requireInteraction==='true',
+      icon: data.icon
+    });
+    // ถ้า payload มี tripId ที่ตรงกับทริปปัจจุบัน ให้ refresh สถานะทันที
+    // แทนที่จะรอ auto-refresh รอบถัดไป (สูงสุด 12 วิ)
+    if(data.tripId && data.tripId===savedTripId){
+      refreshStatus();
     }
   });
 }
@@ -1112,6 +1237,9 @@ function loadSaved() {
     $('input-fields').style.display='none';
     $('saved-label').textContent='🪪 '+savedRiderId;
     if (savedTripId) refreshStatus();
+    // ถ้ามี FCM token ค้างอยู่จากก่อนหน้านี้ (ขอไว้ก่อน login) ให้ส่งไป backend ตอนนี้
+    const existingToken = fcmToken || localStorage.getItem(LS_FCM_TOKEN);
+    if (existingToken) sendTokenToBackend(existingToken);
   }
 }
 function clearSaved() {
@@ -1525,7 +1653,38 @@ function startAutoRefresh() {
   },12000);
 }
 
-document.addEventListener('DOMContentLoaded',()=>{ loadSaved(); startAutoRefresh(); updateNotifyUI(); if('Notification' in window && Notification.permission==='granted') registerSW(); });
+/* เปิดใช้งาน FCM แบบเงียบตอนโหลดหน้า ถ้าผู้ใช้เคยอนุญาตไว้แล้วก่อนหน้านี้
+   (ไม่โชว์ loading overlay / toast เพราะเป็นการกู้คืน session ไม่ใช่การกดปุ่มเอง) */
+async function silentlyRestoreFCM(){
+  if(!('Notification' in window) || Notification.permission!=='granted') return;
+  if(!('serviceWorker' in navigator)) return;
+  try{
+    const reg = await navigator.serviceWorker.register('sw.js');
+    swReg = reg;
+    await navigator.serviceWorker.ready;
+    if(!fbApp){
+      fbApp = firebase.initializeApp(firebaseConfig);
+      messaging = firebase.messaging();
+      setupForegroundMessages();
+    }
+    const token = await messaging.getToken({ vapidKey: FCM_VAPID_KEY, serviceWorkerRegistration: reg });
+    if(token){
+      fcmToken = token;
+      localStorage.setItem(LS_FCM_TOKEN, token);
+      sendTokenToBackend(token);
+    }
+  }catch(err){
+    console.warn('[FCM] silentlyRestoreFCM ล้มเหลว:', err);
+  }
+  updateNotifyUI();
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  loadSaved();
+  startAutoRefresh();
+  updateNotifyUI();
+  silentlyRestoreFCM();
+});
 </script>
 </body>
 </html>
