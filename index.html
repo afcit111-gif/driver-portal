@@ -1102,18 +1102,17 @@ async function initFCM(){
   }
 }
 
-/* TODO: เชื่อมกับ Google Apps Script เมื่อฝั่ง backend พร้อม
-   แนวทาง: เพิ่มฟังก์ชัน saveDriverFcmToken(riderId, token) ฝั่ง .gs
-   แล้วเรียกผ่าน callScript('saveDriverFcmToken',[savedRiderId, token]) ตรงนี้ */
+/* ส่ง FCM token ไปเก็บที่ Apps Script (ชีท FcmTokens) ผูกกับ riderId
+   เรียกตอน: ได้ token ใหม่จาก initFCM, กู้คืน session ตอนเปิดแอป,
+   และตอน login สำเร็จถ้ามี token ค้างอยู่ก่อนหน้านี้ */
 function sendTokenToBackend(token){
   if(!savedRiderId){
     console.log('[FCM] ยังไม่ได้ login (ไม่มี savedRiderId) — จะส่ง token ตอน login สำเร็จแทน');
     return;
   }
-  // callScript('saveDriverFcmToken',[savedRiderId, token])
-  //   .then(res=>console.log('[FCM] บันทึก token ที่ backend สำเร็จ', res))
-  //   .catch(e=>console.warn('[FCM] บันทึก token ที่ backend ไม่สำเร็จ', e));
-  console.log('[FCM] (stub) จะส่ง token ไป backend สำหรับ riderId=', savedRiderId, 'token=', token);
+  callScript('saveDriverFcmToken',[savedRiderId, token])
+    .then(res=>console.log('[FCM] บันทึก token ที่ backend สำเร็จ', res))
+    .catch(e=>console.warn('[FCM] บันทึก token ที่ backend ไม่สำเร็จ', e));
 }
 
 /* รับ push ตอนแอปเปิดอยู่ (foreground)
