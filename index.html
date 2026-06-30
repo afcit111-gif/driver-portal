@@ -1085,7 +1085,7 @@ async function initFCM(){
     localStorage.setItem(LS_FCM_TOKEN, token);
     console.log('[FCM] token:', token);
 
-    // 5) ส่ง token ไปเก็บที่ backend (รอเชื่อมกับ Apps Script ภายหลัง)
+    // 5) ส่ง token ไปเก็บที่ backend (เชื่อมกับ Apps Script แล้ว — ดู sendTokenToBackend)
     sendTokenToBackend(token);
 
     hideLoad();
@@ -1650,6 +1650,34 @@ function startAutoRefresh() {
         .catch(()=>{});
     }
   },12000);
+}
+
+/* iOS/Android จะ suspend setInterval ทันทีที่แอปเข้าสู่เบื้องหลัง (สลับแอป/ล็อกจอ)
+   ทำให้ setInterval เดิมหยุดนับและไม่ resume เองตอนกลับมา (โดยเฉพาะ iOS Safari
+   standalone PWA ที่ suspend เข้มงวดกว่า browser tab ปกติมาก) ผลคือข้อมูลค้าง
+   จนกว่าจะกดปุ่มอัปเดตเอง — listener นี้แก้โดย "เช็คสถานะทันที" ทุกครั้งที่แอป
+   กลับมาอยู่ foreground แทนที่จะรอ setInterval รอบถัดไป */
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'&&savedRiderId&&savedTripId){
+    silentRefreshStatus();
+  }
+});
+/* iOS Safari บางเวอร์ชันยิง 'visibilitychange' ไม่ครบทุกเคส (เช่น สลับแอปแล้ว
+   กลับมาแบบเร็วมาก) จึงเสริมด้วย 'pageshow' ซึ่งยิงทุกครั้งที่หน้าเว็บกลับมา
+   แสดงผล รวมถึงกรณีถูกดึงจาก back-forward cache (bfcache) ของ Safari ด้วย */
+window.addEventListener('pageshow',(e)=>{
+  if(savedRiderId&&savedTripId){
+    silentRefreshStatus();
+  }
+});
+/* เวอร์ชันเงียบของ refreshStatus — ไม่โชว์ loading overlay เพราะเรียกอัตโนมัติ
+   ตอนแอปกลับมา foreground ไม่ใช่การกดปุ่มเอง (ใช้ logic เดียวกับใน
+   startAutoRefresh เดิม เพื่อไม่ให้จอกระพริบ/รบกวนผู้ใช้) */
+function silentRefreshStatus() {
+  if(!savedRiderId||!savedTripId)return;
+  callScript('findTripsForDriver',[savedRiderId])
+    .then(res=>{ if(!res.success)return; const t=res.single?res.trip:(res.trips||[]).find(x=>x.tripId===savedTripId); if(t){currentTrip=t;showStatusCard(t);} })
+    .catch(()=>{});
 }
 
 /* เปิดใช้งาน FCM แบบเงียบตอนโหลดหน้า ถ้าผู้ใช้เคยอนุญาตไว้แล้วก่อนหน้านี้
