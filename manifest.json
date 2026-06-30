@@ -1,0 +1,10 @@
+{
+  "name": "Driver Portal",
+  "short_name": "Driver",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f1f5f9",
+  "theme_color": "#1e3a8a",
+  "icons": []
+}

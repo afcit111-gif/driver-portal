@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#1e3a8a">
+<link rel="manifest" href="manifest.json">
 <title>Driver Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
@@ -128,8 +129,14 @@ body {
   background: var(--blue-dk);
   transition: max-height .22s ease;
 }
-.notify-panel.open { max-height: 140px; }
+.notify-panel.open { max-height: 260px; }
 .notify-panel-inner { padding: 0 16px 14px; }
+.notify-ios-steps {
+  margin-top: 9px; padding: 10px 11px;
+  background: rgba(255,255,255,.08); border-radius: 10px;
+}
+.notify-ios-steps div { font-size: 11.5px; color: rgba(255,255,255,.85); line-height: 1.7; }
+.notify-ios-steps b { color: #fff; }
 .notify-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .notify-row-title { font-size: 13px; font-weight: 700; color: #fff; }
 .notify-row-sub   { font-size: 11px; color: rgba(255,255,255,.55); margin-top: 2px; }
@@ -618,7 +625,8 @@ body {
         </div>
         <button class="notify-toggle-btn" id="notify-toggle-btn" onclick="requestNotifyPermission()">เปิดใช้งาน</button>
       </div>
-      <div class="notify-hint">เปิดไว้เพื่อรับแจ้งเตือน "เรียกเข้าช่องโหลด" และ "เอกสารพร้อม" แม้ไม่ได้เปิดหน้าจอนี้อยู่</div>
+      <div class="notify-hint" id="notify-hint">เปิดไว้เพื่อรับแจ้งเตือน "เรียกเข้าช่องโหลด" และ "เอกสารพร้อม" แม้ไม่ได้เปิดหน้าจอนี้อยู่</div>
+      <div class="notify-ios-steps" id="notify-ios-steps" style="display:none"></div>
     </div>
   </div>
 
@@ -923,18 +931,58 @@ function toggleNotifyPanel(){
   $n('notify-panel').classList.toggle('open');
 }
 
+/* ── platform detection ── */
+function isIOS(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1); // iPadOS
+}
+function isStandalone(){
+  return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone===true;
+}
+function iosVersion(){
+  const m=navigator.userAgent.match(/OS (\d+)_(\d+)/);
+  return m ? parseFloat(m[1]+'.'+m[2]) : null;
+}
+
 function updateNotifyUI(){
-  const btn=$n('notify-btn'), dot=$n('notify-dot'), tbtn=$n('notify-toggle-btn'), txt=$n('notify-status-txt');
+  const btn=$n('notify-btn'), dot=$n('notify-dot'), tbtn=$n('notify-toggle-btn'),
+        txt=$n('notify-status-txt'), hint=$n('notify-hint'), steps=$n('notify-ios-steps');
+  steps.style.display='none';
+
+  /* ─ iOS: ต้องติดตั้งเป็น Home Screen App ก่อนเท่านั้น ไม่ว่าจะใช้ Safari หรือ Chrome ─
+     (Chrome บน iOS ใช้ WebKit engine เดียวกับ Safari แอปเปิ้ลบังคับ จึงข้อจำกัดเหมือนกันทุกประการ) */
+  if(isIOS() && !isStandalone()){
+    btn.classList.remove('on'); dot.style.display='block';
+    txt.textContent='iOS ต้องติดตั้งแอปก่อนถึงจะแจ้งเตือนได้';
+    tbtn.textContent='ดูวิธีติดตั้ง'; tbtn.className='notify-toggle-btn'; tbtn.disabled=false;
+    hint.textContent='iOS (ทั้ง Safari และ Chrome) ไม่อนุญาตการแจ้งเตือนจากแท็บเบราว์เซอร์ปกติ ต้อง "เพิ่มลงหน้าจอโฮม" ก่อนเท่านั้น';
+    steps.style.display='block';
+    steps.innerHTML=`<div>1. เปิดหน้านี้ด้วย <b>Safari</b> (Chrome บน iOS ใช้ไม่ได้)</div>
+      <div>2. แตะปุ่ม <b>แชร์ 📤</b> ด้านล่างจอ</div>
+      <div>3. เลือก <b>"เพิ่มลงหน้าจอโฮม" / Add to Home Screen</b></div>
+      <div>4. เปิดแอปจาก<b>ไอคอนหน้าจอโฮม</b> (ไม่ใช่จาก Safari) แล้วกดปุ่มนี้อีกครั้ง</div>`;
+    return;
+  }
+  if(isIOS() && isStandalone() && iosVersion() && iosVersion()<16.4){
+    btn.classList.remove('on'); dot.style.display='block';
+    txt.textContent='iOS เวอร์ชันนี้ไม่รองรับการแจ้งเตือน (ต้อง iOS 16.4+)';
+    tbtn.textContent='ไม่รองรับ'; tbtn.className='notify-toggle-btn is-off-denied'; tbtn.disabled=true;
+    hint.textContent='กรุณาอัปเดต iOS เป็นเวอร์ชัน 16.4 ขึ้นไป';
+    return;
+  }
+
   if(!('Notification' in window)){
     txt.textContent='เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน';
     tbtn.textContent='ไม่รองรับ'; tbtn.disabled=true; tbtn.className='notify-toggle-btn is-off-denied';
+    hint.textContent='ลองเปิดด้วย Chrome บน Android แทน';
     return;
   }
   const perm=Notification.permission;
   if(perm==='granted'){
     btn.classList.add('on'); dot.style.display='none';
-    txt.textContent='เปิดใช้งานแล้ว — จะแจ้งเตือนแม้ไม่ได้เปิดหน้าจอนี้';
+    txt.textContent='เปิดใช้งานแล้ว — จะแจ้งเตือนตอนแอปเปิด/สลับไปแอปอื่นชั่วคราว';
     tbtn.textContent='เปิดอยู่ ✓'; tbtn.className='notify-toggle-btn is-on'; tbtn.disabled=false;
+    hint.textContent='หมายเหตุ: ถ้าปิดแอปสนิทหรือล็อกหน้าจอนาน เบราว์เซอร์อาจหยุดทำงานเบื้องหลัง แจ้งเตือนจะมาช้า/ไม่มาได้';
   } else if(perm==='denied'){
     btn.classList.remove('on'); dot.style.display='block';
     txt.textContent='ถูกบล็อก — กรุณาเปิดสิทธิ์แจ้งเตือนในตั้งค่าเบราว์เซอร์';
@@ -947,6 +995,10 @@ function updateNotifyUI(){
 }
 
 function requestNotifyPermission(){
+  if(isIOS() && !isStandalone()){
+    $n('notify-panel').classList.add('open'); // โชว์ขั้นตอนติดตั้งให้เห็นชัด
+    return;
+  }
   if(!('Notification' in window)){ showToast('เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน','err'); return; }
   if(Notification.permission==='denied'){
     showToast('กรุณาเปิดสิทธิ์แจ้งเตือนจากตั้งค่าเบราว์เซอร์ของคุณ','err'); return;
@@ -955,7 +1007,7 @@ function requestNotifyPermission(){
     updateNotifyUI();
     if(perm==='granted'){
       showToast('เปิดการแจ้งเตือนสำเร็จ ✓','ok');
-      sendBgNotification('🔔 เปิดการแจ้งเตือนแล้ว','ระบบจะแจ้งเตือนแม้ไม่ได้เปิดหน้าจอนี้อยู่',{tag:'notify-test',silent:true});
+      sendBgNotification('🔔 เปิดการแจ้งเตือนแล้ว','ระบบจะแจ้งเตือนตอนแอปเปิด/สลับแอปชั่วคราวอยู่',{tag:'notify-test',silent:true});
       registerSW();
     } else {
       showToast('ไม่ได้รับสิทธิ์การแจ้งเตือน','err');
@@ -968,14 +1020,25 @@ function registerSW(){
   navigator.serviceWorker.register('sw.js').then(reg=>{ swReg=reg; }).catch(()=>{});
 }
 
-/* ส่งแจ้งเตือนระดับระบบ (ขึ้นแม้ปิดหน้าจอ/สลับแอป) */
+/* ส่งแจ้งเตือนระดับระบบ (ขึ้น notification tray ของมือถือ) */
+/* ไอคอนวงกลมสี — ใช้แยกโทนระหว่างประเภทแจ้งเตือน (สีพื้นหลังการ์ดเปลี่ยนไม่ได้เพราะเป็น UI ของ OS/เบราว์เซอร์ ปรับได้แค่ไอคอนประกอบ) */
+function notifyIcon_(color,emoji){
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>`+
+              `<circle cx='50' cy='50' r='46' fill='${color}'/>`+
+              `<text x='50' y='66' font-size='50' text-anchor='middle'>${emoji}</text></svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
+}
+const NOTIFY_ICON_BLUE  = notifyIcon_('#1d4ed8','🔔');  // โทนน้ำเงิน — เรียกเข้าช่องโหลด
+const NOTIFY_ICON_GREEN = notifyIcon_('#15803d','📄');  // โทนเขียว — เอกสารพร้อม
+
 function sendBgNotification(title,body,opts){
   opts=opts||{};
   if(!('Notification' in window)||Notification.permission!=='granted')return;
   const payload={
     body: body||'',
-    icon: 'https://em-content.zobj.net/source/apple/391/bell_1f514.png',
-    badge:'https://em-content.zobj.net/source/apple/391/bell_1f514.png',
+    icon: opts.icon||undefined,
+    badge: opts.icon||undefined,
+    image: opts.icon||undefined,
     vibrate:[300,150,300],
     tag: opts.tag||'driver-portal',
     renotify: !opts.silent,
@@ -1266,7 +1329,7 @@ function showCallPopup(trip) {
     const sayIt=()=>speak(`กรุณานำรถเข้าช่องโหลดสินค้า ช่องที่ ${trip.dock||'-'} ลำดับคิวที่ ${trip.rtlQueue||'-'} กรุณาสแกนคิวอาร์ยืนยันเข้าช่องโหลดค่ะ ขอบคุณค่ะ`);
     setTimeout(sayIt,500); clearInterval(callSpeakRepeatTimer); callSpeakRepeatTimer=setInterval(sayIt,SPEAK_REPEAT_MS);
     if(document.hidden){
-      sendBgNotification('🔔 เรียกเข้าช่องโหลด!',`กรุณานำรถเข้าช่อง ${trip.dock||'—'} · คิว #${trip.rtlQueue||'—'}`,{tag:'call-popup',requireInteraction:true});
+      sendBgNotification('🔔 เรียกเข้าช่องโหลด!',`กรุณานำรถเข้าช่อง ${trip.dock||'—'} · คิว #${trip.rtlQueue||'—'}`,{tag:'call-popup',requireInteraction:true,icon:NOTIFY_ICON_BLUE});
     }
   }
 }
@@ -1305,7 +1368,7 @@ function showDocsPopup() {
   const popup=$('docs-popup'),already=popup.classList.contains('show'); popup.classList.add('show');
   if(!already){ playDocsBeep(); if(navigator.vibrate)navigator.vibrate([300,150,300]); const sayIt=()=>speak('เอกสารพร้อมแล้วค่ะ! กรุณาติดต่อเจ้าหน้าที่ เพื่อรับเอกสาร และกดรับทราบด้วยค่ะ ขอบคุณค่ะ'); setTimeout(sayIt,300); clearInterval(docsSpeakRepeatTimer); docsSpeakRepeatTimer=setInterval(sayIt,SPEAK_REPEAT_MS);
     if(document.hidden){
-      sendBgNotification('📄✅ เอกสารพร้อมแล้ว!','กรุณาติดต่อเจ้าหน้าที่เพื่อรับเอกสาร',{tag:'docs-popup',requireInteraction:true});
+      sendBgNotification('📄✅ เอกสารพร้อมแล้ว!','กรุณาติดต่อเจ้าหน้าที่เพื่อรับเอกสาร',{tag:'docs-popup',requireInteraction:true,icon:NOTIFY_ICON_GREEN});
     }
   }
 }
