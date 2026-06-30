@@ -1053,52 +1053,12 @@ function sendBgNotification(title,body,opts){
 }
 
 let mode='in', savedRiderId='', savedTripId='', currentTrip=null, liveTimer=null;
-let callAudioCtx=null, callAudioNodes=[], callVibrateTimer=null, callReminderTimer=null, docsReminderTimer=null;
-let callSpeakRepeatTimer=null, docsSpeakRepeatTimer=null, speechKeepAliveTimer=null;
-
-/* ─── TTS ─────────────────────────────── */
-let thaiVoice=null, voicesReady=false;
-function loadThaiVoice() {
-  if (!('speechSynthesis' in window)) return;
-  const v = speechSynthesis.getVoices(); if (!v.length) return; voicesReady=true;
-  const th = v.filter(x => x.lang && x.lang.toLowerCase().startsWith('th'));
-  if (!th.length) return;
-  thaiVoice = th.find(x=>/female|หญิง|kanya|premwadee/i.test(x.name)) || th.find(x=>!/male|ชาย/i.test(x.name)) || th[0];
-}
-if ('speechSynthesis' in window) { loadThaiVoice(); speechSynthesis.onvoiceschanged = loadThaiVoice; }
-
-function speak(text) {
-  try {
-    if (!('speechSynthesis' in window)) return;
-    if (!voicesReady) loadThaiVoice();
-    speechSynthesis.cancel();
-    clearInterval(speechKeepAliveTimer); speechKeepAliveTimer=null;
-    setTimeout(() => {
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang='th-TH'; u.pitch=1.25; u.rate=0.98; u.volume=1;
-      if (thaiVoice) u.voice=thaiVoice;
-      u.onstart = () => {
-        clearInterval(speechKeepAliveTimer);
-        speechKeepAliveTimer = setInterval(() => {
-          if (!speechSynthesis.speaking) { clearInterval(speechKeepAliveTimer); speechKeepAliveTimer=null; return; }
-          speechSynthesis.pause(); speechSynthesis.resume();
-        }, 4000);
-      };
-      u.onend = () => { clearInterval(speechKeepAliveTimer); speechKeepAliveTimer=null; };
-      u.onerror = () => { clearInterval(speechKeepAliveTimer); speechKeepAliveTimer=null; };
-      speechSynthesis.speak(u);
-    }, 80);
-  } catch(e) {}
-}
-function stopSpeak() {
-  try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch(e) {}
-  clearInterval(speechKeepAliveTimer); speechKeepAliveTimer=null;
-}
+let callAudioCtx=null, callAudioNodes=[], callVibrateTimer=null, callReminderTimer=null, docsReminderTimer=null, docsBellRepeatTimer=null;
 
 let audioUnlocked=false;
 function unlockAudioOnce() {
   if (audioUnlocked) return; audioUnlocked=true;
-  try { const u=new SpeechSynthesisUtterance(' '); u.volume=0; u.lang='th-TH'; speechSynthesis.speak(u); } catch(e) {}
+  try { const ctx=new(window.AudioContext||window.webkitAudioContext)(); if(ctx.state==='suspended')ctx.resume(); setTimeout(()=>{try{ctx.close();}catch(e){}},50); } catch(e) {}
 }
 document.addEventListener('touchend', unlockAudioOnce, {once:true,capture:true});
 document.addEventListener('click',    unlockAudioOnce, {once:true,capture:true});
@@ -1326,8 +1286,6 @@ function showCallPopup(trip) {
   popup.classList.add('show');
   if(!already){
     startCallSound(); startVibrate();
-    const sayIt=()=>speak(`กรุณานำรถเข้าช่องโหลดสินค้า ช่องที่ ${trip.dock||'-'} ลำดับคิวที่ ${trip.rtlQueue||'-'} กรุณาสแกนคิวอาร์ยืนยันเข้าช่องโหลดค่ะ ขอบคุณค่ะ`);
-    setTimeout(sayIt,500); clearInterval(callSpeakRepeatTimer); callSpeakRepeatTimer=setInterval(sayIt,SPEAK_REPEAT_MS);
     if(document.hidden){
       sendBgNotification('🔔 เรียกเข้าช่องโหลด!',`กรุณานำรถเข้าช่อง ${trip.dock||'—'} · คิว #${trip.rtlQueue||'—'}`,{tag:'call-popup',requireInteraction:true,icon:NOTIFY_ICON_BLUE});
     }
@@ -1335,8 +1293,7 @@ function showCallPopup(trip) {
 }
 function hideCallPopup() {
   $('call-popup').classList.remove('show');
-  stopCallSound(); stopVibrate(); stopSpeak();
-  clearInterval(callSpeakRepeatTimer); callSpeakRepeatTimer=null;
+  stopCallSound(); stopVibrate();
 }
 function startCallSound() {
   stopCallSound();
@@ -1344,8 +1301,26 @@ function startCallSound() {
     callAudioCtx=new(window.AudioContext||window.webkitAudioContext)();
     const comp=callAudioCtx.createDynamicsCompressor(); comp.threshold.value=-6;comp.knee.value=3;comp.ratio.value=4;comp.attack.value=.002;comp.release.value=.1; comp.connect(callAudioCtx.destination);
     const master=callAudioCtx.createGain(); master.gain.value=1; master.connect(comp);
-    function playBeep(){ if(!callAudioCtx)return; [{freq:880,t:0,dur:.22},{freq:880,t:.28,dur:.22},{freq:1100,t:.56,dur:.35}].forEach(({freq,t,dur})=>{ const osc=callAudioCtx.createOscillator(),env=callAudioCtx.createGain(); osc.connect(env);env.connect(master);osc.type='triangle'; osc.frequency.setValueAtTime(freq,callAudioCtx.currentTime+t); env.gain.setValueAtTime(0,callAudioCtx.currentTime+t); env.gain.linearRampToValueAtTime(1,callAudioCtx.currentTime+t+.015); env.gain.exponentialRampToValueAtTime(.001,callAudioCtx.currentTime+t+dur); osc.start(callAudioCtx.currentTime+t); osc.stop(callAudioCtx.currentTime+t+dur+.01); callAudioNodes.push(osc); }); }
-    playBeep(); const ti=setInterval(()=>{ if(!callAudioCtx){clearInterval(ti);return;} playBeep(); },2200); callAudioNodes.push({stop:()=>clearInterval(ti)});
+    function ringBell(t0){
+      // bell-like ring: fundamental + harmonics with fast attack, long decay
+      [
+        {freq:1320,gain:1.0,dur:.9},
+        {freq:1980,gain:.5,dur:.7},
+        {freq:2640,gain:.28,dur:.55},
+        {freq:3300,gain:.14,dur:.4}
+      ].forEach(({freq,gain,dur})=>{
+        const osc=callAudioCtx.createOscillator(),env=callAudioCtx.createGain();
+        osc.connect(env);env.connect(master);osc.type='sine';
+        osc.frequency.setValueAtTime(freq,callAudioCtx.currentTime+t0);
+        env.gain.setValueAtTime(0,callAudioCtx.currentTime+t0);
+        env.gain.linearRampToValueAtTime(gain,callAudioCtx.currentTime+t0+.008);
+        env.gain.exponentialRampToValueAtTime(.001,callAudioCtx.currentTime+t0+dur);
+        osc.start(callAudioCtx.currentTime+t0); osc.stop(callAudioCtx.currentTime+t0+dur+.02);
+        callAudioNodes.push(osc);
+      });
+    }
+    function playRingSet(){ if(!callAudioCtx)return; ringBell(0); ringBell(.32); }
+    playRingSet(); const ti=setInterval(()=>{ if(!callAudioCtx){clearInterval(ti);return;} playRingSet(); },2200); callAudioNodes.push({stop:()=>clearInterval(ti)});
   }catch(e){}
 }
 function stopCallSound(){ if(callAudioCtx){try{callAudioCtx.close();}catch(e){}callAudioCtx=null;} callAudioNodes.forEach(n=>{try{n.stop&&n.stop();}catch(e){}});callAudioNodes=[]; }
@@ -1366,15 +1341,34 @@ function shouldShowDocsPopup(trip) {
 }
 function showDocsPopup() {
   const popup=$('docs-popup'),already=popup.classList.contains('show'); popup.classList.add('show');
-  if(!already){ playDocsBeep(); if(navigator.vibrate)navigator.vibrate([300,150,300]); const sayIt=()=>speak('เอกสารพร้อมแล้วค่ะ! กรุณาติดต่อเจ้าหน้าที่ เพื่อรับเอกสาร และกดรับทราบด้วยค่ะ ขอบคุณค่ะ'); setTimeout(sayIt,300); clearInterval(docsSpeakRepeatTimer); docsSpeakRepeatTimer=setInterval(sayIt,SPEAK_REPEAT_MS);
+  if(!already){ playDocsBeep(); if(navigator.vibrate)navigator.vibrate([300,150,300]); clearInterval(docsBellRepeatTimer); docsBellRepeatTimer=setInterval(playDocsBeep,SPEAK_REPEAT_MS);
     if(document.hidden){
       sendBgNotification('📄✅ เอกสารพร้อมแล้ว!','กรุณาติดต่อเจ้าหน้าที่เพื่อรับเอกสาร',{tag:'docs-popup',requireInteraction:true,icon:NOTIFY_ICON_GREEN});
     }
   }
 }
-function hideDocsPopup(){ $('docs-popup').classList.remove('show'); stopSpeak(); clearInterval(docsSpeakRepeatTimer); docsSpeakRepeatTimer=null; }
+function hideDocsPopup(){ $('docs-popup').classList.remove('show'); clearInterval(docsBellRepeatTimer); docsBellRepeatTimer=null; }
 function playDocsBeep(){
-  try{ const ctx=new(window.AudioContext||window.webkitAudioContext)(); [{freq:660,t:0},{freq:880,t:.16}].forEach(({freq,t})=>{ const osc=ctx.createOscillator(),env=ctx.createGain(); osc.connect(env);env.connect(ctx.destination);osc.type='sine'; osc.frequency.setValueAtTime(freq,ctx.currentTime+t); env.gain.setValueAtTime(0,ctx.currentTime+t); env.gain.linearRampToValueAtTime(.7,ctx.currentTime+t+.02); env.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+t+.35); osc.start(ctx.currentTime+t); osc.stop(ctx.currentTime+t+.36); }); setTimeout(()=>{try{ctx.close();}catch(e){}},600); }catch(e){}
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [
+      {freq:1320,gain:1.0,dur:.9,t:0},
+      {freq:1980,gain:.5,dur:.7,t:0},
+      {freq:2640,gain:.28,dur:.55,t:0},
+      {freq:1320,gain:.85,dur:.9,t:.32},
+      {freq:1980,gain:.42,dur:.7,t:.32},
+      {freq:2640,gain:.24,dur:.55,t:.32}
+    ].forEach(({freq,gain,dur,t})=>{
+      const osc=ctx.createOscillator(),env=ctx.createGain();
+      osc.connect(env);env.connect(ctx.destination);osc.type='sine';
+      osc.frequency.setValueAtTime(freq,ctx.currentTime+t);
+      env.gain.setValueAtTime(0,ctx.currentTime+t);
+      env.gain.linearRampToValueAtTime(gain,ctx.currentTime+t+.008);
+      env.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+t+dur);
+      osc.start(ctx.currentTime+t); osc.stop(ctx.currentTime+t+dur+.02);
+    });
+    setTimeout(()=>{try{ctx.close();}catch(e){}},1300);
+  }catch(e){}
 }
 function acknowledgeDocsReady() {
   if(!currentTrip)return; hideDocsPopup(); setDocsAcked(currentTrip.tripId); clearTimeout(docsReminderTimer);
