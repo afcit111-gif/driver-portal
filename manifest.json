@@ -6,5 +6,12 @@
   "display": "standalone",
   "background_color": "#f1f5f9",
   "theme_color": "#1e3a8a",
-  "icons": []
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/afcit111-gif/driver-portal/main/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
