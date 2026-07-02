@@ -1460,6 +1460,8 @@ function handleSubmit() {
 function onFound(res,riderId) {
   if(!res.success){ showResult('err','⚠️',res.warn?'ไม่สามารถดำเนินการ':'เกิดข้อผิดพลาด',res.error||'',null,res.warn?'warn':'err'); return; }
   savedRiderId=riderId; localStorage.setItem(LS_RIDER,riderId);
+  const existingToken = fcmToken || localStorage.getItem(LS_FCM_TOKEN);   // ← เพิ่ม
+  if (existingToken) sendTokenToBackend(existingToken);                   // ← เพิ่ม
   if(res.single) selectTrip(res.trip); else showPicker(res.trips);
 }
 
@@ -1849,6 +1851,8 @@ function showDayStepRid() {
   const savedR = localStorage.getItem(LS_RIDER);
   if (savedR) {
     savedRiderId = savedR;
+    const existingToken = fcmToken || localStorage.getItem(LS_FCM_TOKEN);   // ← เพิ่ม
+    if (existingToken) sendTokenToBackend(existingToken);                   // ← เพิ่ม
     $('day-saved-strip').style.display='flex';
     $('day-rid-input-wrap').style.display='none';
     $('day-saved-label').textContent='🪪 '+savedR;
@@ -1931,6 +1935,8 @@ function finalizeDayConfirm(coords) {
   } catch(e){}
 
   savedRiderId=rid; localStorage.setItem(LS_RIDER,rid);
+  const existingToken = fcmToken || localStorage.getItem(LS_FCM_TOKEN);   // ← เพิ่ม
+  if (existingToken) sendTokenToBackend(existingToken);                   // ← เพิ่ม
   if(res.mode==='preplanned'){
     dayFlowKind='preplanned';
     hd('day-step-rid'); hd('day-step-vehicle'); hd('day-step-queue');
