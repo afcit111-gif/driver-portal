@@ -122,9 +122,14 @@ body {
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
 
 .mode-toggle-btn {
-  background: rgba(255,255,255,.15); border: none; border-radius: 20px; color: #fff;
-  font-size: 12px; font-weight: 700; padding: 6px 12px; cursor: pointer; font-family: var(--font);
-  display: flex; align-items: center; gap: 4px; transition: background .15s, transform .15s;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  cursor: pointer;
+  transition: background .15s, transform .15s;
 }
 .mode-toggle-btn:active { transform: scale(.92); }
 
@@ -641,7 +646,7 @@ body[data-theme="night"] .load-ov { background: rgba(11,17,32,.88); }
         <span>🔁</span><span>เปลี่ยนรอบ</span>
       </button>
       <button class="mode-toggle-btn" id="mode-toggle-btn" onclick="toggleTheme()">
-        <span id="mode-toggle-ico">☀️</span><span id="mode-toggle-lbl">Day</span>
+        <span id="mode-toggle-ico">☀️</span>
       </button>
       <button class="notify-btn" id="notify-btn" onclick="toggleNotifyPanel()" aria-label="การแจ้งเตือน">
         <span id="notify-ico">🔔</span>
@@ -1335,7 +1340,6 @@ setInterval(tick, 1000); tick();
 function applyTheme() {
   document.body.setAttribute('data-theme', themeMode === 'night' ? 'night' : 'day');
   $('mode-toggle-ico').textContent = themeMode === 'night' ? '🌙' : '☀️';
-  $('mode-toggle-lbl').textContent = themeMode === 'night' ? 'Night' : 'Day';
 }
 function toggleTheme() {
   themeMode = themeMode === 'night' ? 'day' : 'night';
